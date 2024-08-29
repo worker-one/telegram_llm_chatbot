@@ -1,4 +1,4 @@
-telegram_bot:
-  token : "YOUR_BOT_TOKEN"
-application:
-  parameter: "value"
+service:
+  base_url: "https://fuzzy-chainsaw-rp9qwqgvq462xrjq-8000.app.github.dev/"
+strings:
+  help: "This is a bot to interacte with llm chatbot"

@@ -6,6 +6,8 @@ import telebot
 from dotenv import find_dotenv, load_dotenv
 from omegaconf import OmegaConf
 
+from telegram_llm_chatbot.api.handlers import chats
+
 # Load logging configuration with OmegaConf
 logging_config = OmegaConf.to_container(OmegaConf.load("./src/telegram_llm_chatbot/conf/logging_config.yaml"), resolve=True)
 logging.config.dictConfig(logging_config)
@@ -18,32 +20,17 @@ if BOT_TOKEN is None:
     logger.error("BOT_TOKEN is not set in the environment variables.")
     exit(1)
 
-cfg = OmegaConf.load("./src/telegram_llm_chatbot/conf/config.yaml")
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode=None)
+chats.register_handlers(bot)
+cfg = OmegaConf.load("./src/telegram_llm_chatbot/conf/config.yaml")
 
 # Define the base URL of your API
-base_url = "http://0.0.0.0:8000"
+base_url = cfg.service.base_url
 
-# Define the command for adding a chat
-@bot.message_handler(commands=['add_chat'])
-def add_chat(message):
-    user_id, chat_name = map(int, message.text.split()[1:])
-    response = requests.post(f"{base_url}/add_chat", json={"user_id": user_id, "chat_name": chat_name})
-    bot.reply_to(message, response.json()["message"])
-
-# Define the command for getting chats
-@bot.message_handler(commands=['get_chats'])
-def get_chats(message):
-    user_id = int(message.text.split()[1])
-    response = requests.post(f"{base_url}/get_chats", json={"user_id": user_id})
-    bot.reply_to(message, f"Chats for user {user_id}: {response.json()['chats']}")
-
-# Define the command for deleting a chat
-@bot.message_handler(commands=['delete_chat'])
-def delete_chat(message):
-    user_id, chat_id = map(int, message.text.split()[1:])
-    response = requests.post(f"{base_url}/delete_chat", json={"user_id": user_id, "chat_id": chat_id})
-    bot.reply_to(message, response.json()["message"])
+@bot.message_handler(commands=["help"])
+def help_command(message):
+    user_id = message.from_user.id
+    bot.reply_to(message, cfg.strings.help)
 
 # Define the command for invoking the chatbot
 @bot.message_handler(commands=['invoke'])

@@ -1,17 +1,18 @@
-import datetime
-import logging
 import logging.config
 import os
 
-from dotenv import load_dotenv, find_dotenv
+from dotenv import find_dotenv, load_dotenv
 from omegaconf import OmegaConf
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from .models import Base, Message, User
+from .models import Base
 
 # Load logging configuration with OmegaConf
-logging_config = OmegaConf.to_container(OmegaConf.load("./src/telegram_bot/conf/logging_config.yaml"), resolve=True)
+logging_config = OmegaConf.to_container(
+    OmegaConf.load("./src/telegram_llm_chatbot/conf/logging_config.yaml"),
+    resolve=True
+)
 
 # Apply the logging configuration
 logging.config.dictConfig(logging_config)
@@ -23,41 +24,17 @@ load_dotenv(find_dotenv(usecwd=True))
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 if DATABASE_URL is None:
-	logger.error("DATABASE_URL is not set in the environment variables.")
-	exit(1)
+    logger.error("DATABASE_URL is not set in the environment variables.")
+    exit(1)
 
-engine = create_engine(DATABASE_URL)
-Base.metadata.create_all(engine)
-
-Session = sessionmaker(bind=engine)
-
+def get_enginge():
+    return create_engine(DATABASE_URL, connect_args={'connect_timeout': 15})
 
 def create_tables():
-	Base.metadata.create_all(engine)
+    engine = get_enginge()
+    Base.metadata.create_all(engine)
+    logger.info("Tables created")
 
-
-def log_message(user_id, message_text):
-	session = Session()
-	new_message = Message(
-		timestamp=datetime.datetime.now(),
-		user_id=user_id,
-		message_text=message_text
-	)
-	session.add(new_message)
-	session.commit()
-
-
-def add_user(user_id, first_name, last_name, username, phone_number):
-	session = Session()
-	new_user = User(
-		user_id=user_id,
-		first_message_timestamp=datetime.datetime.now(),
-		first_name=first_name,
-		last_name=last_name,
-		username=username,
-		phone_number=phone_number
-	)
-	# add only if the user is not already in the database
-	if not session.query(User).filter(User.user_id == user_id).first():
-		session.add(new_user)
-	session.commit()
+def get_session():
+    engine = get_enginge()
+    return sessionmaker(bind=engine)()

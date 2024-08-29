@@ -4,7 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 class Message(Base):
-    __tablename__ = 'messages'
+    __tablename__ = 'messages_telegram_llm_chatbot'
 
     id = Column(Integer, primary_key=True)
     timestamp = Column(DateTime)
@@ -13,11 +13,8 @@ class Message(Base):
 
 
 class User(Base):
-    __tablename__ = 'users'
+    __tablename__ = 'users_telegram_llm_chatbot'
 
     user_id = Column(Integer, primary_key=True)
-    first_message_timestamp = Column(DateTime)
-    first_name = Column(String)
-    last_name = Column(String)
     username = Column(String)
-    phone_number = Column(String)
+    last_chat_id = Column(Integer)
