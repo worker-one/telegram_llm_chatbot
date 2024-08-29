@@ -2,3 +2,9 @@ service:
   base_url: "https://fuzzy-chainsaw-rp9qwqgvq462xrjq-8000.app.github.dev/"
 strings:
   help: "This is a bot to interacte with llm chatbot"
+  add_chat: "Chat has been added successfully."
+  current_chat_no_chat: "You have not selected any chat yet. Use /get_chats to select a chat."
+  get_chats_no_chats: "You have no chats."
+  handle_callback_query_error: "An error occurred. Please try again later."
+  handle_callback_query_success: "You have selected chat {chat_id}"
+  delete_chat: "Chat has been deleted successfully."
