@@ -24,9 +24,6 @@ if BOT_TOKEN is None:
     exit(1)
 
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode=None)
-chats.register_handlers(bot)
-llm.register_handlers(bot)
-users.register_handlers(bot)
 
 cfg = OmegaConf.load("./src/telegram_llm_chatbot/conf/config.yaml")
 
@@ -46,4 +43,7 @@ def help_command(message):
 
 def start_bot():
     logger.info(f"Bot `{str(bot.get_me().username)}` has started")
-    bot.infinity_polling()
+    chats.register_handlers(bot)
+    llm.register_handlers(bot)
+    users.register_handlers(bot)
+    bot.polling()

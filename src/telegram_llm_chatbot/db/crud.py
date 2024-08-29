@@ -1,4 +1,3 @@
-import datetime
 import logging
 from typing import Optional
 
@@ -14,16 +13,8 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 
-def log_message(user_id, message_text):
-	session = Session()
-	new_message = Message(
-		timestamp=datetime.datetime.now(),
-		user_id=user_id,
-		message_text=message_text
-	)
-	db.add(new_message)
-	db.commit()
-
+def get_user(db: Session, user_id: int):
+    return db.query(User).filter(User.user_id == user_id).first()
 
 def add_user(db: Session, user_id: int, username: str, last_chat_id: int = None):
 	new_user = User(
