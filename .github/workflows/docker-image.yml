@@ -19,7 +19,6 @@ jobs:
       - name: Create .env file
         run: |
           echo "BOT_TOKEN=${{ secrets.BOT_TOKEN }}" >> .env
-          echo "BOT_NAME=${{ secrets.BOT_NAME }}" >> .env
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
 
       - name: Login to DockerHub
@@ -33,7 +32,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: konverner/telegram_bot:latest
+          tags: konverner/telegram_llm_chatbot:latest
 
       - name: Log out from DockerHub
         run: docker logout
