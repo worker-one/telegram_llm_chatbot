@@ -174,7 +174,7 @@ def register_handlers(bot):
 
 
     @bot.callback_query_handler(func=lambda call: "delete_chat_" in call.data)
-    def select_chat_callback_query(call):
+    def delete_chat_callback_query(call):
         user_id = int(call.from_user.id)
         chat_id = int(call.data.split('_')[2])
         chat_name = call.data.split('_')[3]
@@ -192,6 +192,34 @@ def register_handlers(bot):
                 chat_id=user_id,
                 text=cfg.strings.delete_chat_success.format(chat_name=chat_name)
             )
+            # Propose to select another chat via /get_chats command
+            response = requests.post(
+                f"{base_url}/get_chats",
+                json={"user_id": user_id},
+                timeout=10
+            )
+            chats = response.json()['chats']
+
+            markup = types.InlineKeyboardMarkup()
+            for chat in chats:
+                button = types.InlineKeyboardButton(
+                    text=chat['chat_name'],
+                    callback_data=f"select_chat_{chat['chat_id']}_{chat['chat_name']}"
+                )
+                markup.add(button)
+
+            if chats:
+                bot.send_message(
+                    chat_id=call.message.chat.id,
+                    text=cfg.strings.get_chats,
+                    reply_markup=markup
+                )
+            else:
+                bot.send_message(
+                    chat_id=call.message.chat.id,
+                    text=cfg.strings.get_chats_empty
+                )
+
         else:
             bot.send_message(
                 chat_id=user_id,

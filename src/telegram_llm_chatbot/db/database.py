@@ -5,6 +5,7 @@ from dotenv import find_dotenv, load_dotenv
 from omegaconf import OmegaConf
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
 
 from .models import Base
 
@@ -28,8 +29,11 @@ if DATABASE_URL is None:
     exit(1)
 
 def get_enginge():
-    return create_engine(DATABASE_URL, connect_args={'connect_timeout': 15})
-
+    return create_engine(
+        DATABASE_URL,
+        connect_args={'connect_timeout': 5},
+        poolclass=NullPool
+    )
 def create_tables():
     engine = get_enginge()
     Base.metadata.create_all(engine)

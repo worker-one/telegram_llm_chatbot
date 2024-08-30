@@ -2,7 +2,8 @@ import logging
 from typing import Optional
 
 from sqlalchemy.orm import Session
-from .models import User, Message
+
+from .models import User
 
 # Set up logging
 logger = logging.getLogger(__name__)
