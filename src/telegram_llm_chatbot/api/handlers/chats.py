@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 cfg = OmegaConf.load("./src/telegram_llm_chatbot/conf/config.yaml")
 base_url = cfg.service.base_url
 
+logger.info(f"LLM service base url: {base_url}")
 
 def register_handlers(bot):
     # Define the command for adding a chat
@@ -94,7 +95,7 @@ def register_handlers(bot):
         # add user to database if not already present
         db = database.get_session()
         crud.add_user(db, user_id, message.chat.username)
-
+        print(f"{base_url}/get_chats")
         response = requests.post(
             f"{base_url}/get_chats",
             json={"user_id": user_id},
