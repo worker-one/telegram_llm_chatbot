@@ -5,7 +5,6 @@ from omegaconf import OmegaConf
 from telebot import types
 
 from telegram_llm_chatbot.db import crud, database
-from telegram_llm_chatbot.db.crud import get_user
 
 # Load logging configuration with OmegaConf
 logging_config = OmegaConf.to_container(
@@ -29,7 +28,7 @@ def register_handlers(bot):
         user_id = int(message.chat.id)
 
         # add user to database if not already present
-        if get_user(user_id) is None:
+        if crud.get_user(user_id) is None:
             crud.upsert_user(user_id, message.chat.username)
 
             # add user via api
@@ -69,7 +68,7 @@ def register_handlers(bot):
         user_id = int(message.chat.id)
 
         # add user to database if not already present
-        if get_user(user_id) is None:
+        if crud.get_user(user_id) is None:
             crud.upsert_user(user_id, message.chat.username)
 
             # add user via api
@@ -103,7 +102,7 @@ def register_handlers(bot):
         user_id = int(message.chat.id)
 
         # add user to database if not already present
-        if get_user(user_id) is None:
+        if crud.get_user(user_id) is None:
             crud.upsert_user(user_id, message.chat.username)
 
             # add user via api
@@ -138,98 +137,53 @@ def register_handlers(bot):
             bot.send_message(chat_id=message.chat.id, text=cfg.strings.get_chats_empty)
 
 
-@bot.callback_query_handler(func=lambda call: "select_chat_" in call.data)
-def select_chat_callback_query(call):
-    chat_id = int(call.data.split('_')[2])
-    chat_name = call.data.split('_')[3]
-    user_id = call.from_user.id
+    @bot.callback_query_handler(func=lambda call: "select_chat_" in call.data)
+    def select_chat_callback_query(call):
+        chat_id = int(call.data.split('_')[2])
+        chat_name = call.data.split('_')[3]
+        user_id = call.from_user.id
 
-    logging.info(f"User with id {user_id} selected chat `{chat_name}`.")
+        logging.info(f"User with id {user_id} selected chat `{chat_name}`.")
 
-    try:
-        # Get a new session
+        try:
+            # Get a new session
 
-        # Update the last_chat_id for the user
-        crud.update_user(user_id, call.from_user.username, last_chat_id=chat_id)
-    except Exception as e:
-        logger.error(f"Error updating user with id {user_id}: {e}")
+            # Update the last_chat_id for the user
+            crud.update_user(user_id, call.from_user.username, last_chat_id=chat_id)
+        except Exception as e:
+            logger.error(f"Error updating user with id {user_id}: {e}")
+            bot.send_message(
+                chat_id=call.message.chat.id,
+                text="An error occurred. Please try again later."
+            )
+
+        logger.info(f"User with id {user_id} updated successfully with chat_id {chat_id}.")
+        # Send a message to the user
         bot.send_message(
             chat_id=call.message.chat.id,
-            text="An error occurred. Please try again later."
+            text=cfg.strings.handle_callback_query_success.format(chat_name=chat_name)
         )
 
-    logger.info(f"User with id {user_id} updated successfully with chat_id {chat_id}.")
-    # Send a message to the user
-    bot.send_message(
-        chat_id=call.message.chat.id,
-        text=cfg.strings.handle_callback_query_success.format(chat_name=chat_name)
-    )
 
+    @bot.message_handler(commands=['delete_chat'])
+    def delete_chat(message):
+        user_id = int(message.chat.id)
 
-@bot.message_handler(commands=['delete_chat'])
-def delete_chat(message):
-    user_id = int(message.chat.id)
+        # add user to database if not already present
+        if crud.get_user(user_id) is None:
+            crud.upsert_user(user_id, message.chat.username)
 
-    # add user to database if not already present
-    if get_user(user_id) is None:
-        crud.upsert_user(user_id, message.chat.username)
-
-        # add user via api
-        response = requests.post(
-            f"{base_url}/add_user",
-            json={
-                "user": {
-                    "id": user_id,
-                    "name": message.chat.username
+            # add user via api
+            response = requests.post(
+                f"{base_url}/add_user",
+                json={
+                    "user": {
+                        "id": user_id,
+                        "name": message.chat.username
+                    }
                 }
-            }
-        )
-
-    response = requests.post(
-        f"{base_url}/get_chats",
-        json={"user_id": user_id},
-        timeout=10
-    )
-    chats = response.json()['chats']
-
-    if not chats:
-        bot.send_message(chat_id=message.chat.id, text=cfg.strings.get_chats_empty)
-    else:
-        markup = types.InlineKeyboardMarkup()
-        for chat in chats:
-            button = types.InlineKeyboardButton(
-                text=chat['chat_name'],
-                callback_data=f"delete_chat_{chat['chat_id']}_{chat['chat_name']}"
             )
-            markup.add(button)
 
-        bot.send_message(
-            chat_id=message.chat.id,
-            text=cfg.strings.delete_chat_ask,
-            reply_markup=markup
-        )
-
-
-@bot.callback_query_handler(func=lambda call: "delete_chat_" in call.data)
-def delete_chat_callback_query(call):
-    user_id = int(call.from_user.id)
-    chat_id = int(call.data.split('_')[2])
-    chat_name = call.data.split('_')[3]
-
-    response = requests.post(
-        f"{base_url}/delete_chat",
-        json={
-            "user_id": user_id,
-            "chat_id": chat_id
-        },
-        timeout=10
-    )
-    if response.status_code == 200:
-        bot.send_message(
-            chat_id=user_id,
-            text=cfg.strings.delete_chat_success.format(chat_name=chat_name)
-        )
-        # Propose to select another chat via /get_chats command
         response = requests.post(
             f"{base_url}/get_chats",
             json={"user_id": user_id},
@@ -237,28 +191,73 @@ def delete_chat_callback_query(call):
         )
         chats = response.json()['chats']
 
-        markup = types.InlineKeyboardMarkup()
-        for chat in chats:
-            button = types.InlineKeyboardButton(
-                text=chat['chat_name'],
-                callback_data=f"select_chat_{chat['chat_id']}_{chat['chat_name']}"
-            )
-            markup.add(button)
+        if not chats:
+            bot.send_message(chat_id=message.chat.id, text=cfg.strings.get_chats_empty)
+        else:
+            markup = types.InlineKeyboardMarkup()
+            for chat in chats:
+                button = types.InlineKeyboardButton(
+                    text=chat['chat_name'],
+                    callback_data=f"delete_chat_{chat['chat_id']}_{chat['chat_name']}"
+                )
+                markup.add(button)
 
-        if chats:
             bot.send_message(
-                chat_id=call.message.chat.id,
-                text=cfg.strings.get_chats,
+                chat_id=message.chat.id,
+                text=cfg.strings.delete_chat_ask,
                 reply_markup=markup
             )
+
+
+    @bot.callback_query_handler(func=lambda call: "delete_chat_" in call.data)
+    def delete_chat_callback_query(call):
+        user_id = int(call.from_user.id)
+        chat_id = int(call.data.split('_')[2])
+        chat_name = call.data.split('_')[3]
+
+        response = requests.post(
+            f"{base_url}/delete_chat",
+            json={
+                "user_id": user_id,
+                "chat_id": chat_id
+            },
+            timeout=10
+        )
+        if response.status_code == 200:
+            bot.send_message(
+                chat_id=user_id,
+                text=cfg.strings.delete_chat_success.format(chat_name=chat_name)
+            )
+            # Propose to select another chat via /get_chats command
+            response = requests.post(
+                f"{base_url}/get_chats",
+                json={"user_id": user_id},
+                timeout=10
+            )
+            chats = response.json()['chats']
+
+            markup = types.InlineKeyboardMarkup()
+            for chat in chats:
+                button = types.InlineKeyboardButton(
+                    text=chat['chat_name'],
+                    callback_data=f"select_chat_{chat['chat_id']}_{chat['chat_name']}"
+                )
+                markup.add(button)
+
+            if chats:
+                bot.send_message(
+                    chat_id=call.message.chat.id,
+                    text=cfg.strings.get_chats,
+                    reply_markup=markup
+                )
+            else:
+                bot.send_message(
+                    chat_id=call.message.chat.id,
+                    text=cfg.strings.get_chats_empty
+                )
+
         else:
             bot.send_message(
-                chat_id=call.message.chat.id,
-                text=cfg.strings.get_chats_empty
+                chat_id=user_id,
+                text=cfg.strings.delete_chat_error
             )
-
-    else:
-        bot.send_message(
-            chat_id=user_id,
-            text=cfg.strings.delete_chat_error
-        )

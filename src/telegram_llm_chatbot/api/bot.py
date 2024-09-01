@@ -1,5 +1,6 @@
 import logging.config
 import os
+import requests
 
 import telebot
 from dotenv import find_dotenv, load_dotenv
@@ -35,8 +36,19 @@ def help_command(message):
     user_id = message.from_user.id
 
     # add user to database if not already present
-    db = database.get_session()
-    crud.add_user(db, user_id, message.from_user.username)
+    if crud.get_user(user_id) is None:
+        crud.upsert_user(user_id, message.chat.username)
+
+        # add user via api
+        response = requests.post(
+            f"{base_url}/add_user",
+            json={
+                "user": {
+                    "id": user_id,
+                    "name": message.chat.username
+                }
+            }
+        )
 
     bot.reply_to(message, cfg.strings.help)
 
@@ -46,4 +58,4 @@ def start_bot():
     chats.register_handlers(bot)
     llm.register_handlers(bot)
     users.register_handlers(bot)
-    bot.infinity_polling()
+    bot.polling()

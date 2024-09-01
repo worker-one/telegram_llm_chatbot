@@ -4,7 +4,7 @@ import requests
 from omegaconf import OmegaConf
 
 from telegram_llm_chatbot.db import database
-from telegram_llm_chatbot.db.crud import get_last_chat_id
+from telegram_llm_chatbot.db import crud
 
 # Load logging configuration with OmegaConf
 logging_config = OmegaConf.to_container(
@@ -26,7 +26,7 @@ def register_handlers(bot):
         user_message = message.text
 
         # add user to database if not already present
-        if get_user(user_id) is None:
+        if crud.get_user(user_id) is None:
             crud.upsert_user(user_id, message.chat.username)
 
             # add user via api
@@ -40,7 +40,7 @@ def register_handlers(bot):
                 }
             )
 
-        last_chat_id = get_last_chat_id(user_id)
+        last_chat_id = crud.get_last_chat_id(user_id)
 
         if last_chat_id is None:
             bot.reply_to(message, cfg.strings.no_chats)
