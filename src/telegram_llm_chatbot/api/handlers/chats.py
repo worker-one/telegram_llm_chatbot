@@ -146,10 +146,8 @@ def register_handlers(bot):
         logging.info(f"User with id {user_id} selected chat `{chat_name}`.")
 
         try:
-            # Get a new session
-
             # Update the last_chat_id for the user
-            crud.update_user(user_id, call.from_user.username, last_chat_id=chat_id)
+            crud.upsert_user(user_id, call.from_user.username, last_chat_id=chat_id)
         except Exception as e:
             logger.error(f"Error updating user with id {user_id}: {e}")
             bot.send_message(

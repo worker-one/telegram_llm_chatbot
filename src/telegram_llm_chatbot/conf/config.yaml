@@ -13,4 +13,4 @@ strings:
   handle_callback_query_success: "You have selected chat `{chat_name}`"
   delete_chat_ask: "Choose a chat to delete:"
   delete_chat_success: "Chat `{chat_name}` has been deleted successfully."
-  no_chat: "You have no chats. Use menu to add a chat."
+  no_chats: "You have no chats. Use menu to add a chat."
