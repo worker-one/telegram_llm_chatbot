@@ -25,8 +25,26 @@ def register_handlers(bot):
         user_id = int(message.chat.id)
         user_message = message.text
 
-        db = database.get_session()
-        last_chat_id = get_last_chat_id(db, user_id)
+        # add user to database if not already present
+        if get_user(user_id) is None:
+            crud.upsert_user(user_id, message.chat.username)
+
+            # add user via api
+            response = requests.post(
+                f"{base_url}/add_user",
+                json={
+                    "user": {
+                        "id": user_id,
+                        "name": message.chat.username
+                    }
+                }
+            )
+
+        last_chat_id = get_last_chat_id(user_id)
+
+        if last_chat_id is None:
+            bot.reply_to(message, cfg.strings.no_chats)
+            return
 
         response = requests.post(
             f"{base_url}/invoke",
