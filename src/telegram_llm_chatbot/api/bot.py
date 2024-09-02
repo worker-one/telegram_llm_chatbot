@@ -58,4 +58,4 @@ def start_bot():
     chats.register_handlers(bot)
     llm.register_handlers(bot)
     users.register_handlers(bot)
-    bot.polling()
+    bot.infinity_polling()
