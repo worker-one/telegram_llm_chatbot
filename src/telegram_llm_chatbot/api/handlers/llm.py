@@ -47,7 +47,7 @@ def register_handlers(bot):
             return
 
         response = requests.post(
-            f"{base_url}/invoke",
+            f"{base_url}/query",
             json={
                 "user_id": user_id,
                 "chat_id": last_chat_id,
