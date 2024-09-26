@@ -59,5 +59,5 @@ def start_bot():
     llm.register_handlers(bot)
     users.register_handlers(bot)
     admin.register_handlers(bot)
-    bot.infinity_polling()
-    #bot.polling()
+    #bot.infinity_polling()
+    bot.polling()
