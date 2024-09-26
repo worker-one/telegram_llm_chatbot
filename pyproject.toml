@@ -26,7 +26,8 @@ dependencies = [
     "sqlalchemy==1.4.25",
     "psycopg2-binary",
     "python-dotenv",
-    "pandas==2.1.4"
+    "pandas==2.1.4",
+    "openpyxl"
 ]
 
 [project.optional-dependencies]
