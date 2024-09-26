@@ -1,6 +1,10 @@
 service:
   base_url: "http://94.131.119.139:8000"
 strings:
+  no_rights: "The user {username} does not have admin rights."
+  admin_menu:
+    title: "Admin menu 🔑"
+    export_data: "Export data"
   help: "This is a bot to interacte with llm chatbot. Use menu to navigate."
   add_chat_ask_name: "Enter the name of the chat:"
   add_chat_success: "Chat `{chat_name}` has been added successfully."
