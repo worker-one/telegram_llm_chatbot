@@ -19,7 +19,7 @@ base_url = cfg.service.base_url
 
 def register_handlers(bot):
     # Define the command for invoking the chatbot
-    @bot.message_handler(func=lambda message: True, content_types=['text'])
+    @bot.message_handler(func=lambda message: message.text[0] != '/', content_types=['text'])
     def invoke_chatbot(message):
         user_id = int(message.chat.id)
         user_message = message.text
