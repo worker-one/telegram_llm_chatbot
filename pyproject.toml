@@ -25,7 +25,8 @@ dependencies = [
     "omegaconf==2.3.0",
     "sqlalchemy==1.4.25",
     "psycopg2-binary",
-    "python-dotenv"
+    "python-dotenv",
+    "pandas"
 ]
 
 [project.optional-dependencies]
