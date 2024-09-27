@@ -1,7 +1,6 @@
 service:
-  base_url: "http://94.131.119.139:8000"
+  base_url: "https://ideal-space-xylophone-v6qv7xx54gp6fw6x9-8000.app.github.dev"
 strings:
-  no_rights: "The user {username} does not have admin rights."
   no_rights: "The user {username} does not have admin rights."
   admin_menu:
     title: "Admin menu 🔑"

@@ -3,7 +3,7 @@ import logging.config
 import requests
 from omegaconf import OmegaConf
 
-from telegram_llm_chatbot.db import crud, database
+from telegram_llm_chatbot.db import crud
 
 # Load logging configuration with OmegaConf
 logging_config = OmegaConf.to_container(
@@ -60,5 +60,6 @@ def register_handlers(bot):
                 "user_message": user_message
             }
         )
-        logger.info(response.json()['ai_message'])
-        bot.reply_to(message, {response.json()['ai_message']}, parse_mode="markdown")
+        ai_message = response.json()['model_response']['response_content']
+        bot.send_chat_action(chat_id=user_id, action="typing")
+        bot.reply_to(message, ai_message, parse_mode="markdown")
