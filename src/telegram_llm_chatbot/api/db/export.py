@@ -32,4 +32,3 @@ def export_table_to_df(table_name: str) -> pd.DataFrame:
     df = pd.read_sql_query(query, conn)
     conn.close()
     return df
-

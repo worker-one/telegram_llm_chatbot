@@ -5,6 +5,7 @@ from omegaconf import OmegaConf
 
 from telegram_llm_chatbot.db import crud
 
+
 # Load logging configuration with OmegaConf
 logging_config = OmegaConf.to_container(
     OmegaConf.load("./src/telegram_llm_chatbot/conf/logging_config.yaml"),
@@ -28,7 +29,6 @@ def register_handlers(bot):
         if crud.get_user(user_id) is None:
             crud.upsert_user(user_id, message.chat.username)
 
-       # check if user exists in the database
         response = requests.get(f"{base_url}/users/{user_id}")
         if response.status_code == 404:
             # add user via api
