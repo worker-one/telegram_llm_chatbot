@@ -1,13 +1,20 @@
 service:
-  base_url: "https://crispy-potato-694g7jjp6rjxf4677-8000.app.github.dev"
+  base_url: "http://94.131.119.139:8000"
 strings:
-  no_rights: "Пользователь {username} не имеет прав администратора."
+  no_rights: "The user {username} does not have admin rights."
   admin_menu:
-    title: "Меню администратора 🔑"
-    export_data: "Экспорт данных"
-  menu:
-    modes:
-      step_by_step: "Пошаговое объеснение"
-      short: "Краткое объяснение"
-    billing: "Тариф"
-    feedback: "Обратная связь"
+    title: "Admin menu 🔑"
+    export_data: "Export data"
+  help: "This is a bot to interacte with llm chatbot. Use menu to navigate."
+  add_chat_ask_name: "Enter the name of the chat:"
+  add_chat_success: "Chat `{chat_name}` has been added successfully."
+  add_chat_error: "Chat `{chat_name}` has not been added."
+  current_chat: "Your current chat is {chat_name}"
+  current_chat_no_chat: "You have not selected any chat yet. Use /get_chats to select a chat."
+  get_chats: "Here are your chats:"
+  get_chats_empty: "You have no chats."
+  handle_callback_query_error: "An error occurred. Please try again later."
+  handle_callback_query_success: "You have selected chat `{chat_name}`"
+  delete_chat_ask: "Choose a chat to delete:"
+  delete_chat_success: "Chat `{chat_name}` has been deleted successfully."
+  no_chats: "You have no chats. Use menu to add a chat."
