@@ -102,7 +102,6 @@ def register_handlers(bot):
         if chat_id:
             response = requests.get(
                 f"{base_url}/chats/{user_id}",
-                json={"user_id": user_id},
                 timeout=10
             )
             chats = response.json()['chats']
@@ -139,10 +138,9 @@ def register_handlers(bot):
                 logger.error(f"Error adding user with id {user_id}: {response.json()['message']}")
 
         response = requests.get(
-            f"{base_url}/chats/{user_id}",
-            json={"user_id": user_id},
-            timeout=15
-        )
+                f"{base_url}/chats/{user_id}",
+                timeout=10
+            )
         chats = response.json()['chats']
 
         markup = types.InlineKeyboardMarkup()
@@ -211,11 +209,10 @@ def register_handlers(bot):
             else:
                 logger.error(f"Error adding user with id {user_id}: {response.json()['message']}")
 
-        response = requests.post(
-            f"{base_url}/chats",
-            json={"user_id": user_id},
-            timeout=10
-        )
+        response = requests.get(
+                f"{base_url}/chats/{user_id}",
+                timeout=10
+            )
         chats = response.json()['chats']
 
         if not chats:
