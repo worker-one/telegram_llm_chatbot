@@ -2,6 +2,7 @@ service:
   base_url: "http://94.131.119.139:8000"
 strings:
   no_rights: "The user {username} does not have admin rights."
+  no_rights: "The user {username} does not have admin rights."
   admin_menu:
     title: "Admin menu 🔑"
     export_data: "Export data"

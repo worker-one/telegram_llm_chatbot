@@ -28,9 +28,9 @@ def register_handlers(bot):
         if crud.get_user(user_id) is None:
             crud.upsert_user(user_id, message.chat.username)
 
-        # check if user exists in the database
+       # check if user exists in the database
         response = requests.get(f"{base_url}/users/{user_id}")
-        if not response.json()["response"]:
+        if response.status_code == 404:
             # add user via api
             response = requests.post(
                 f"{base_url}/users",
