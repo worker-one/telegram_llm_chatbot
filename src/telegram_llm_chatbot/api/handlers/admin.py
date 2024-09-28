@@ -36,9 +36,9 @@ def register_handlers(bot):
         user_id = message.from_user.id
         user = get_user(user_id)
 
-        if user.username not in ["gvozd_aa", "konverner"]:
+        if user.username.lower() not in ["sashagvozd", "konverner"]:
             # inform that the user does not have rights
-            bot.send_message(user_id, strings.no_rights)
+            bot.send_message(user_id, strings.no_rights.format(username=user.username))
             return
 
         # Send the admin menu
