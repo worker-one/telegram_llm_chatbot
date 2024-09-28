@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, Integer, String
+from sqlalchemy import Column, DateTime, Integer, String, BigInteger
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -15,6 +15,6 @@ class Message(Base):
 class User(Base):
     __tablename__ = 'users_telegram_llm_chatbot'
 
-    user_id = Column(Integer, primary_key=True)
+    user_id = Column(BigInteger, primary_key=True)
     username = Column(String)
     last_chat_id = Column(Integer)

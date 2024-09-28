@@ -55,9 +55,11 @@ def help_command(message):
 
 def start_bot():
     logger.info(f"Bot `{str(bot.get_me().username)}` has started")
+    
     chats.register_handlers(bot)
     llm.register_handlers(bot)
     users.register_handlers(bot)
     admin.register_handlers(bot)
-    bot.infinity_polling()
-    #bot.polling()
+    
+    #bot.infinity_polling()
+    bot.polling()
