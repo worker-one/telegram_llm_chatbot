@@ -1,20 +1,16 @@
 import logging.config
 import os
-import requests
 
+import requests
 import telebot
 from dotenv import find_dotenv, load_dotenv
 from omegaconf import OmegaConf
 
-from telegram_llm_chatbot.api.handlers import chats, llm, users, admin
+from telegram_llm_chatbot.api.handlers import admin, chats, llm, users
 from telegram_llm_chatbot.db import crud
 
 # Load logging configuration with OmegaConf
-logging_config = OmegaConf.to_container(
-    OmegaConf.load("./src/telegram_llm_chatbot/conf/logging_config.yaml"),
-    resolve=True
-)
-logging.config.dictConfig(logging_config)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 load_dotenv(find_dotenv(usecwd=True))  # Load environment variables from .env file

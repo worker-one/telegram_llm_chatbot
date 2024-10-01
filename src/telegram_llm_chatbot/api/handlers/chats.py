@@ -7,11 +7,7 @@ from telebot import types
 from telegram_llm_chatbot.db import crud
 
 # Load logging configuration with OmegaConf
-logging_config = OmegaConf.to_container(
-    OmegaConf.load("./src/telegram_llm_chatbot/conf/logging_config.yaml"),
-    resolve=True
-)
-logging.config.dictConfig(logging_config)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 cfg = OmegaConf.load("./src/telegram_llm_chatbot/conf/config.yaml")
