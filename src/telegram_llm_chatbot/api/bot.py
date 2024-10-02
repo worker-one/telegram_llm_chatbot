@@ -57,5 +57,5 @@ def start_bot():
     users.register_handlers(bot)
     admin.register_handlers(bot)
     
-    #bot.infinity_polling()
-    bot.polling()
+    bot.infinity_polling()
+    #bot.polling()
