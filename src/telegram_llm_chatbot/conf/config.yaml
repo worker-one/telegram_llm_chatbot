@@ -11,7 +11,6 @@ strings:
     period_month: "Month"
     period_two_weeks: "Two weeks"
     period_all: "All"
-  help: "This is a bot to interacte with llm chatbot. Use menu to navigate."
   add_chat_ask_name: "Enter the name of the chat:"
   add_chat_success: "Chat `{chat_name}` has been added successfully."
   add_chat_error: "Chat `{chat_name}` has not been added."
