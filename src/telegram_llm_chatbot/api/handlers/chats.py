@@ -1,5 +1,5 @@
 import logging.config
-
+import os
 import requests
 from omegaconf import OmegaConf
 from telebot import types
@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 cfg = OmegaConf.load("./src/telegram_llm_chatbot/conf/config.yaml")
-base_url = cfg.service.base_url
+base_url = os.getenv("LLM_API")
 
 logger.info(f"LLM service base url: {base_url}")
 
@@ -101,8 +101,12 @@ def register_handlers(bot):
                 timeout=10
             )
             chats = response.json()['chats']
-            chat_name = [chat['chat_name'] for chat in chats if chat['chat_id'] == chat_id][0]
-            bot.reply_to(message, cfg.strings.current_chat.format(chat_name=chat_name))
+            # TODO
+            try:
+                chat_name = [chat['chat_name'] for chat in chats if chat['chat_id'] == chat_id][0]
+                bot.reply_to(message, cfg.strings.current_chat.format(chat_name=chat_name))
+            except:
+                bot.reply_to(message, cfg.strings.current_chat_no_chat)
         else:
             bot.reply_to(message, cfg.strings.current_chat_no_chat)
 

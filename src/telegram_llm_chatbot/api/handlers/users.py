@@ -1,5 +1,5 @@
 import logging.config
-
+import os
 import requests
 from omegaconf import OmegaConf
 from telebot import TeleBot
@@ -14,7 +14,7 @@ logging.config.dictConfig(logging_config)
 logger = logging.getLogger(__name__)
 
 cfg = OmegaConf.load("./src/telegram_llm_chatbot/conf/config.yaml")
-base_url = cfg.service.base_url
+base_url = os.getenv("LLM_API")
 
 
 def register_handlers(bot: TeleBot):

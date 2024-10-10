@@ -9,7 +9,6 @@ from omegaconf import OmegaConf
 from telegram_llm_chatbot.api.handlers import admin, chats, llm, users
 from telegram_llm_chatbot.db import crud
 
-# Load logging configuration with OmegaConf
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -25,7 +24,7 @@ bot = telebot.TeleBot(BOT_TOKEN, parse_mode=None)
 cfg = OmegaConf.load("./src/telegram_llm_chatbot/conf/config.yaml")
 
 # Define the base URL of your API
-base_url = cfg.service.base_url
+base_url = os.getenv("LLM_API")
 
 @bot.message_handler(commands=["help"])
 def help_command(message):
