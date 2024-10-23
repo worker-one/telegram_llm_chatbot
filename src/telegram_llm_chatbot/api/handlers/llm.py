@@ -74,7 +74,7 @@ def register_handlers(bot):
                 download_file(bot, file_id, user_input_image_path)
                 files = {"files": open(user_input_image_path, "rb")}
                 data = {"user_id": user_id, "chat_id": last_chat_id, "user_message": user_message}
-                response = requests.post(f"{base_url}/model/query", files=files, data=data)
+                response = requests.post(f"{base_url}/llm/query", files=files, data=data)
             except Exception as e:
                 logger.error(f"Error downloading image: {e}")
                 bot.reply_to(message, f"Error downloading image: {e}")
@@ -83,7 +83,7 @@ def register_handlers(bot):
             user_message = message.text
             logger.info(msg="User event", extra={"user_id": user_id, "user_message": user_message})
             data = {"user_id": user_id, "chat_id": last_chat_id, "user_message": user_message}
-            response = requests.post(f"{base_url}/model/query", data=data)
+            response = requests.post(f"{base_url}/llm/query", data=data)
 
         response_content = response.json()['model_response']['response_content']
         bot.send_chat_action(chat_id=user_id, action="typing")
