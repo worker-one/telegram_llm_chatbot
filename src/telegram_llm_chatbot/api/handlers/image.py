@@ -39,7 +39,7 @@ def register_handlers(bot):
         response = requests.get(f"{base_url}/users/users/{user_id}")
         if response.status_code == 404:
             response = requests.post(
-                f"{base_url}/users",
+                f"{base_url}/users/users",
                 json={"user": {"id": user_id, "name": message.chat.username}}
             )
             if response.status_code == 200:
