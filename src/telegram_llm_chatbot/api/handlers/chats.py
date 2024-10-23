@@ -28,7 +28,7 @@ def register_handlers(bot):
             crud.upsert_user(user_id, message.chat.username)
 
         # check if user exists in the database
-        response = requests.get(f"{base_url}/users/{user_id}")
+        response = requests.get(f"{base_url}/users/users/{user_id}")
         if response.status_code == 404:
             # add user via api
             response = requests.post(
@@ -76,7 +76,7 @@ def register_handlers(bot):
             crud.upsert_user(user_id, message.chat.username)
 
         # check if user exists in the database
-        response = requests.get(f"{base_url}/users/{user_id}")
+        response = requests.get(f"{base_url}/users/users/{user_id}")
         if response.status_code == 404:
             # add user via api
             response = requests.post(
@@ -97,7 +97,7 @@ def register_handlers(bot):
 
         if chat_id:
             response = requests.get(
-                f"{base_url}/chats/{user_id}",
+                f"{base_url}/chats/chats/{user_id}",
                 timeout=10
             )
             chats = response.json()['chats']
@@ -120,7 +120,7 @@ def register_handlers(bot):
             crud.upsert_user(user_id, message.chat.username)
 
         # check if user exists in the database
-        response = requests.get(f"{base_url}/users/{user_id}")
+        response = requests.get(f"{base_url}/users/users/{user_id}")
         if response.status_code == 404:
             # add user via api
             response = requests.post(
@@ -138,7 +138,7 @@ def register_handlers(bot):
                 logger.error(f"Error adding user with id {user_id}: {response.json()['message']}")
 
         response = requests.get(
-                f"{base_url}/chats/{user_id}",
+                f"{base_url}/chats/chats/{user_id}",
                 timeout=10
             )
         chats = response.json()['chats']
@@ -192,7 +192,7 @@ def register_handlers(bot):
             crud.upsert_user(user_id, message.chat.username)
 
         # check if user exists in the database
-        response = requests.get(f"{base_url}/users/{user_id}")
+        response = requests.get(f"{base_url}/users/users/{user_id}")
         if response.status_code == 404:
             # add user via api
             response = requests.post(
@@ -210,7 +210,7 @@ def register_handlers(bot):
                 logger.error(f"Error adding user with id {user_id}: {response.json()['message']}")
 
         response = requests.get(
-                f"{base_url}/chats/{user_id}",
+                f"{base_url}/chats/chats/{user_id}",
                 timeout=10
             )
         chats = response.json()['chats']
@@ -240,7 +240,7 @@ def register_handlers(bot):
         chat_name = call.data.split('_')[3]
 
         response = requests.delete(
-            f"{base_url}/chats/{user_id}/{chat_id}",
+            f"{base_url}/chats/chats/{user_id}/{chat_id}",
             timeout=10
         )
         if response.status_code == 200:
@@ -250,7 +250,7 @@ def register_handlers(bot):
             )
             # Propose to select another chat via /get_chats command
             response = requests.get(
-                f"{base_url}/chats/{user_id}",
+                f"{base_url}/chats/chats/{user_id}",
                 timeout=10
             )
             chats = response.json()['chats']

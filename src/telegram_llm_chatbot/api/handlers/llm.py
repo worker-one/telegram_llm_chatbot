@@ -41,7 +41,7 @@ def register_handlers(bot):
         if crud.get_user(user_id) is None:
             crud.upsert_user(user_id, message.chat.username)
 
-        response = requests.get(f"{base_url}/users/{user_id}")
+        response = requests.get(f"{base_url}/users/users/{user_id}")
         if response.status_code == 404:
             # add user via api
             response = requests.post(

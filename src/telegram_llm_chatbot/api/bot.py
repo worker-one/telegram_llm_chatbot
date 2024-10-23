@@ -6,7 +6,7 @@ import telebot
 from dotenv import find_dotenv, load_dotenv
 from omegaconf import OmegaConf
 
-from telegram_llm_chatbot.api.handlers import admin, chats, llm, users, welcome
+from telegram_llm_chatbot.api.handlers import admin, chats, llm, users, welcome, image
 from telegram_llm_chatbot.db import crud
 
 logging.basicConfig(level=logging.INFO)
@@ -53,9 +53,10 @@ def start_bot():
     
     chats.register_handlers(bot)
     llm.register_handlers(bot)
+    image.register_handlers(bot)
     users.register_handlers(bot)
     admin.register_handlers(bot)
     welcome.register_handlers(bot)
     
-    bot.infinity_polling()
-    #bot.polling()
+    #bot.infinity_polling()
+    bot.polling()

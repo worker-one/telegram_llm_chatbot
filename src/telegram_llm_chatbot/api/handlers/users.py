@@ -21,5 +21,5 @@ def register_handlers(bot: TeleBot):
     # Define the command for getting users
     @bot.message_handler(commands=['get_users'])
     def get_users(message):
-        response = requests.get(f"{base_url}/users")
+        response = requests.get(f"{base_url}/users/users")
         bot.reply_to(message, f"Users: {response.json()}")
