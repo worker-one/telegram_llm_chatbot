@@ -55,7 +55,7 @@ def register_handlers(bot):
 
         # add chat for the user
         response = requests.post(
-            f"{base_url}/chats",
+            f"{base_url}/chats/chats",
             json={
                 "user_id": user_id,
                 "chat_name": chat_name
@@ -80,7 +80,7 @@ def register_handlers(bot):
         if response.status_code == 404:
             # add user via api
             response = requests.post(
-                f"{base_url}/users",
+                f"{base_url}/users/users",
                 json={
                     "user": {
                         "id": user_id,
@@ -124,7 +124,7 @@ def register_handlers(bot):
         if response.status_code == 404:
             # add user via api
             response = requests.post(
-                f"{base_url}/users",
+                f"{base_url}/users/users",
                 json={
                     "user": {
                         "id": user_id,
