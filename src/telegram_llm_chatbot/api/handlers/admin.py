@@ -1,14 +1,13 @@
 import datetime
 import logging
+import logging.config
 import os
+
 from omegaconf import OmegaConf
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
+
 from telegram_llm_chatbot.api.db.export import export_table_to_df
 from telegram_llm_chatbot.db.crud import get_user
-
-import logging.config
-
-
 
 config = OmegaConf.load("./src/telegram_llm_chatbot/conf/config.yaml")
 strings = config.strings

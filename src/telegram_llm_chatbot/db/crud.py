@@ -117,3 +117,17 @@ def create_message(chat_id: int, role: str, content: str, timestamp: datetime) -
     db.refresh(db_message)
     db.close()
     return db_message
+
+def get_last_chat_id(user_id: int) -> int:
+    db: Session = get_session()
+    result = db.query(User).filter(User.id == user_id).first()
+    db.close()
+    return result.current_chat_id
+
+def update_user_last_chat_id(user_id: int, chat_id: int) -> Chat:
+    db: Session = get_session()
+    db_user = db.query(User).filter(User.id == user_id).first()
+    db_user.current_chat_id = chat_id
+    db.commit()
+    db.close()
+    return db_user

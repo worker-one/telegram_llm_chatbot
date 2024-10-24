@@ -1,6 +1,5 @@
 from datetime import datetime
-from logging import config
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, confloat, conint
 
@@ -46,6 +45,7 @@ class ModelConfig(BaseModel):
     max_tokens: Optional[conint(ge=0)] = None
     chat_history_limit: Optional[conint(ge=0)] = None
     temperature: Optional[confloat(ge=0.0)] = None
+    stream: Optional[bool] = True
 
 class ModelResponse(BaseModel):
     response_content: str
@@ -61,3 +61,13 @@ class QueryModelResponse(BaseModel):
     user_id: conint(ge=0)
     chat_id: conint(ge=0)
     model_response: ModelResponse
+
+class ImageModelConfig(BaseModel):
+    model_name: Optional[str] = "dall-e-2"  # The name of the model to use for image generation
+    n: Optional[conint(ge=0)] = 1  # Number of images to generate
+    quality: Literal["standard", "hd"] = "standard"  # The quality of the generated images
+    size: Optional[str] = "1024x1024"  # The size of the generated images
+
+class ImageModelResponse(BaseModel):
+    response_content: list[dict[str, str]]
+    config: Optional[ImageModelConfig] = None

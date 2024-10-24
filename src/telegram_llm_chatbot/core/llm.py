@@ -1,9 +1,10 @@
-from telegram_llm_chatbot.api.schemas import ModelConfig, ModelResponse
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_fireworks import ChatFireworks
 from langchain_openai import ChatOpenAI
-from telegram_llm_chatbot.core.files import image_to_base64
 from PIL import Image
+
+from telegram_llm_chatbot.api.schemas import ModelConfig, ModelResponse
+from telegram_llm_chatbot.core.files import image_to_base64
 
 
 class LLM:
@@ -15,11 +16,11 @@ class LLM:
         }
 
     def update_config(self, config: ModelConfig) -> None:
-        for attr in ['provider', 'model_name', 'max_tokens', 'chat_history_limit', 'temperature']:
+        for attr in ['provider', 'model_name', 'max_tokens', 'chat_history_limit', 'temperature', "stream"]:
             if getattr(config, attr) is not None:
                 self.config.__setattr__(attr, getattr(config, attr))
 
-    def stream(
+    def run(
         self,
         chat_history: list[str],
         config: ModelConfig = None,
@@ -61,4 +62,8 @@ class LLM:
             )
             messages.append(message)
 
-        yield client.stream(messages)
+        if config.stream:
+            return client.stream(messages)
+        else:
+            response = client.invoke(messages)
+            return ModelResponse(response_content=response.content, config=config)

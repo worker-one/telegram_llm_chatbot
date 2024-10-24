@@ -1,11 +1,15 @@
-from io import BytesIO
-from typing import Set
 import base64
 import io
+from io import BytesIO
+from typing import Set
+
 import docx
 from docx.oxml.table import CT_Tbl
 from docx.oxml.text.paragraph import CT_P
 from fastapi import UploadFile
+from PIL import Image
+from PyPDF2 import PdfReader
+
 from telegram_llm_chatbot.core.exceptions import (
     FileTooLargeException,
     PDFFileReadingException,
@@ -14,8 +18,6 @@ from telegram_llm_chatbot.core.exceptions import (
     UnsupportedFileTypeException,
     WordFileReadingException,
 )
-from PyPDF2 import PdfReader
-from PIL import Image
 
 
 class TextFileParser:

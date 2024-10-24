@@ -1,17 +1,17 @@
-import os
 import io
 import logging.config
+import os
 from datetime import datetime
-from PIL import Image
+
 from fastapi import UploadFile
-from omegaconf import OmegaConf
-from telegram_llm_chatbot.db import crud
 from hydra.utils import instantiate
+from omegaconf import OmegaConf
+from PIL import Image
 
-from telegram_llm_chatbot.core.llm import LLM
-from telegram_llm_chatbot.core.files import TextFileParser
 from telegram_llm_chatbot.core.exceptions import UnsupportedFileTypeException
-
+from telegram_llm_chatbot.core.files import TextFileParser
+from telegram_llm_chatbot.core.llm import LLM
+from telegram_llm_chatbot.db import crud
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -55,59 +55,65 @@ def register_handlers(bot):
         last_chat_id = crud.get_last_chat_id(user_id)
 
         if last_chat_id is None:
-            bot.reply_to(message, cfg.strings.no_chats)
-            return
+            # pick the first chat if no chat is selected
+            chats = crud.get_user_chats(user_id)
+            if chats:
+                last_chat_id = chats[0].id
+                crud.update_user_last_chat_id(user_id, last_chat_id)
+            else:
+                # Create a new chat
+                bot.reply_to(message, cfg.strings.no_chats)
 
+        image = None
         if message.content_type in ["photo", "document"]:
             user_message = message.caption if message.caption else ""
             file_id = message.photo[-1].file_id if message.content_type == "photo" else message.document.file_id
             filename = message.photo[-1].file_name if message.content_type == "photo" else message.document.file_name
             user_input_image_path = f"./.tmp/files/{user_id}/{filename}"
             logger.info(msg="User event", extra={"user_id": user_id, "user_message": user_message})
-            
             download_file(bot, file_id, user_input_image_path)
             file = open(user_input_image_path, "rb")
-            file_extension = file.filename.rsplit(".", 1)[1].lower()
+            file_extension = filename.rsplit(".", 1)[1].lower()
             if file_extension in {"jpg", "jpeg", "png", "gif"}:
                 image_bytes = file.read()  # Read the file contents
                 image = Image.open(io.BytesIO(image_bytes))  # Convert to PIL Image
 
             elif file_extension in {"pdf", "doc", "docx", "txt"}:
                 uploaded_file = UploadFile(
-                    filename=file.filename,
+                    filename=filename,
                     file=io.BytesIO(file.read()),
-                    size=file.size,
-                    headers={"content-type": file.content_type}
+                    size=os.path.getsize(user_input_image_path)
                 )
                 text_content = text_file_parser.extract_content(uploaded_file)
                 user_message += f"\n{text_content}"
             else:
                 raise UnsupportedFileTypeException(f"Unsupported file type: {file_extension}")
-            
+
         else:
             user_message = message.text
-            image = None
-        
+
         # add the message to the chat history if it exists
         crud.create_message(last_chat_id, "user", content=user_message, timestamp=datetime.now())
 
         # get the chat history
         chat_history = crud.get_chat_history(last_chat_id)
 
+        if llm.config.stream:
+            # Start with an empty message
+            sent_msg = bot.send_message(message.chat.id, "...")
 
-        # Start with an empty message
-        sent_msg = bot.send_message(message.chat.id, "...")
+            # Initialize an empty string to accumulate the response
+            accumulated_response = ""
+            # Generate response using the LLM model and send chunks as they come
+            for chunk in llm.run(chat_history, image=image):
+                accumulated_response += chunk.content
 
-        # Initialize an empty string to accumulate the response
-        accumulated_response = ""
-
-        # Generate response using the LLM model and send chunks as they come
-        for chunk in llm.stream(chat_history, image=image):
-
-            accumulated_response += chunk.content
-
-            try:
-                # Edit the message with the accumulated response
-                bot.edit_message_text(accumulated_response, chat_id=message.chat.id, message_id=sent_msg.message_id)
-            except Exception:
-                continue
+                try:
+                    # Edit the message with the accumulated response
+                    bot.edit_message_text(accumulated_response, chat_id=message.chat.id, message_id=sent_msg.message_id)
+                except Exception:
+                    continue
+        else:
+            # Generate response using the LLM model
+            response = llm.run(chat_history, image=image)
+            bot.send_message(message.chat.id, response.response_content)

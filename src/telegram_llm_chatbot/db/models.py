@@ -9,6 +9,7 @@ class User(Base):
 
     id = Column(BigInteger, unique=True, primary_key=True, index=True)
     name = Column(String, index=True)
+    current_chat_id = Column(Integer)
 
     # Establish relationship with Chat and enable cascade deletion
     chats = relationship("Chat", backref="user", cascade="all, delete-orphan")

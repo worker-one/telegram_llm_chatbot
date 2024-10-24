@@ -1,6 +1,6 @@
 import logging.config
 import os
-import requests
+
 from omegaconf import OmegaConf
 from telebot import types
 
@@ -11,10 +11,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 cfg = OmegaConf.load("./src/telegram_llm_chatbot/conf/config.yaml")
-base_url = os.getenv("LLM_API")
-
-logger.info(f"LLM service base url: {base_url}")
-
 
 def register_handlers(bot):
     # Define the command for adding a chat
@@ -35,18 +31,12 @@ def register_handlers(bot):
         chat_name = message.text
 
         # add chat for the user
-        response = requests.post(
-            f"{base_url}/chats/chats",
-            json={
-                "user_id": user_id,
-                "chat_name": chat_name
-            }
-        )
-        if response.status_code == 200:
+        try:
+            new_chat = crud.create_chat(user_id, chat_name)
             bot.reply_to(message, cfg.strings.add_chat_success.format(chat_name=chat_name))
-        else:
+        except Exception as e:
+            logger.error(f"Error creating chat for user {user_id}: {e}")
             bot.reply_to(message, cfg.strings.add_chat_error)
-            bot.send_message(chat_id=user_id, text=response.json()["message"])
 
     @bot.message_handler(commands=['current_chat'])
     def current_chat(message):
@@ -56,35 +46,12 @@ def register_handlers(bot):
         if crud.get_user(user_id) is None:
             crud.upsert_user(user_id, message.chat.username)
 
-        # check if user exists in the database
-        response = requests.get(f"{base_url}/users/users/{user_id}")
-        if response.status_code == 404:
-            # add user via api
-            response = requests.post(
-                f"{base_url}/users/users",
-                json={
-                    "user": {
-                        "id": user_id,
-                        "name": message.chat.username
-                    }
-                }
-            )
-            if response.status_code == 200:
-                logger.info(f"User with id {user_id} added successfully.")
-            else:
-                logger.error(f"Error adding user with id {user_id}: {response.json()['message']}")
-
         chat_id = crud.get_last_chat_id(user_id)
 
         if chat_id:
-            response = requests.get(
-                f"{base_url}/chats/chats/{user_id}",
-                timeout=10
-            )
-            chats = response.json()['chats']
-            # TODO
+            chats = crud.get_user_chats(user_id)
             try:
-                chat_name = [chat['chat_name'] for chat in chats if chat['chat_id'] == chat_id][0]
+                chat_name = [chat.name for chat in chats if chat.id == chat_id][0]
                 bot.reply_to(message, cfg.strings.current_chat.format(chat_name=chat_name))
             except:
                 bot.reply_to(message, cfg.strings.current_chat_no_chat)
@@ -100,35 +67,13 @@ def register_handlers(bot):
         if crud.get_user(user_id) is None:
             crud.upsert_user(user_id, message.chat.username)
 
-        # check if user exists in the database
-        response = requests.get(f"{base_url}/users/users/{user_id}")
-        if response.status_code == 404:
-            # add user via api
-            response = requests.post(
-                f"{base_url}/users/users",
-                json={
-                    "user": {
-                        "id": user_id,
-                        "name": message.chat.username
-                    }
-                }
-            )
-            if response.status_code == 200:
-                logger.info(f"User with id {user_id} added successfully.")
-            else:
-                logger.error(f"Error adding user with id {user_id}: {response.json()['message']}")
-
-        response = requests.get(
-                f"{base_url}/chats/chats/{user_id}",
-                timeout=10
-            )
-        chats = response.json()['chats']
+        chats = crud.get_user_chats(user_id)
 
         markup = types.InlineKeyboardMarkup()
         for chat in chats:
             button = types.InlineKeyboardButton(
-                text=chat['chat_name'],
-                callback_data=f"select_chat_{chat['chat_id']}_{chat['chat_name']}"
+                text=chat.name,
+                callback_data=f"select_chat_{chat.id}_{chat.name}"
             )
             markup.add(button)
 
@@ -136,7 +81,6 @@ def register_handlers(bot):
             bot.send_message(chat_id=message.chat.id, text=cfg.strings.get_chats, reply_markup=markup)
         else:
             bot.send_message(chat_id=message.chat.id, text=cfg.strings.get_chats_empty)
-
 
     @bot.callback_query_handler(func=lambda call: "select_chat_" in call.data)
     def select_chat_callback_query(call):
@@ -163,7 +107,6 @@ def register_handlers(bot):
             text=cfg.strings.handle_callback_query_success.format(chat_name=chat_name)
         )
 
-
     @bot.message_handler(commands=['delete_chat'])
     def delete_chat(message):
         user_id = int(message.chat.id)
@@ -172,29 +115,7 @@ def register_handlers(bot):
         if crud.get_user(user_id) is None:
             crud.upsert_user(user_id, message.chat.username)
 
-        # check if user exists in the database
-        response = requests.get(f"{base_url}/users/users/{user_id}")
-        if response.status_code == 404:
-            # add user via api
-            response = requests.post(
-                f"{base_url}/users",
-                json={
-                    "user": {
-                        "id": user_id,
-                        "name": message.chat.username
-                    }
-                }
-            )
-            if response.status_code == 200:
-                logger.info(f"User with id {user_id} added successfully.")
-            else:
-                logger.error(f"Error adding user with id {user_id}: {response.json()['message']}")
-
-        response = requests.get(
-                f"{base_url}/chats/chats/{user_id}",
-                timeout=10
-            )
-        chats = response.json()['chats']
+        chats = crud.get_user_chats(user_id)
 
         if not chats:
             bot.send_message(chat_id=message.chat.id, text=cfg.strings.get_chats_empty)
@@ -202,8 +123,8 @@ def register_handlers(bot):
             markup = types.InlineKeyboardMarkup()
             for chat in chats:
                 button = types.InlineKeyboardButton(
-                    text=chat['chat_name'],
-                    callback_data=f"delete_chat_{chat['chat_id']}_{chat['chat_name']}"
+                    text=chat.name,
+                    callback_data=f"delete_chat_{chat.id}_{chat.name}"
                 )
                 markup.add(button)
 
@@ -213,34 +134,26 @@ def register_handlers(bot):
                 reply_markup=markup
             )
 
-
     @bot.callback_query_handler(func=lambda call: "delete_chat_" in call.data)
     def delete_chat_callback_query(call):
         user_id = int(call.from_user.id)
         chat_id = int(call.data.split('_')[2])
         chat_name = call.data.split('_')[3]
 
-        response = requests.delete(
-            f"{base_url}/chats/chats/{user_id}/{chat_id}",
-            timeout=10
-        )
-        if response.status_code == 200:
+        try:
+            crud.delete_chat(user_id, chat_id)
             bot.send_message(
                 chat_id=user_id,
                 text=cfg.strings.delete_chat_success.format(chat_name=chat_name)
             )
             # Propose to select another chat via /get_chats command
-            response = requests.get(
-                f"{base_url}/chats/chats/{user_id}",
-                timeout=10
-            )
-            chats = response.json()['chats']
+            chats = crud.get_user_chats(user_id)
 
             markup = types.InlineKeyboardMarkup()
             for chat in chats:
                 button = types.InlineKeyboardButton(
-                    text=chat['chat_name'],
-                    callback_data=f"select_chat_{chat['chat_id']}_{chat['chat_name']}"
+                    text=chat.name,
+                    callback_data=f"select_chat_{chat.id}_{chat.name}"
                 )
                 markup.add(button)
 
@@ -256,7 +169,8 @@ def register_handlers(bot):
                     text=cfg.strings.get_chats_empty
                 )
 
-        else:
+        except Exception as e:
+            logger.error(f"Error deleting chat with id {chat_id} for user {user_id}: {e}")
             bot.send_message(
                 chat_id=user_id,
                 text=cfg.strings.delete_chat_error
