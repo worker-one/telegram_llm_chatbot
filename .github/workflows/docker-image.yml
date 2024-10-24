@@ -23,6 +23,8 @@ jobs:
           echo "DB_NAME=${{ vars.DB_NAME }}" >> .env
           echo "DB_USER=${{ vars.DB_USER }}" >> .env
           echo "DB_PASSWORD=${{ vars.DB_PASSWORD }}" >> .env
+          echo "OPENAI_API_KEY=${{ vars.OPENAI_API_KEY }}" >> .env
+          echo "FIREWORKS_API_KEY=${{ vars.FIREWORKS_API_KEY }}" >> .env
   
       - name: Login to DockerHub
         uses: docker/login-action@v2
