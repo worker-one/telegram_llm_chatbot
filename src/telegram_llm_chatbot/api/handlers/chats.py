@@ -27,25 +27,6 @@ def register_handlers(bot):
         if crud.get_user(user_id) is None:
             crud.upsert_user(user_id, message.chat.username)
 
-        # check if user exists in the database
-        response = requests.get(f"{base_url}/users/users/{user_id}")
-        if response.status_code == 404:
-            # add user via api
-            response = requests.post(
-                f"{base_url}/users",
-                json={
-                    "user": {
-                        "id": user_id,
-                        "name": message.chat.username
-                    }
-                }
-            )
-            if response.status_code == 200:
-                logger.info(f"User with id {user_id} added successfully.")
-            else:
-                logger.error(f"Error adding user with id {user_id}: {response.json()['message']}")
-
-
         bot.reply_to(message, cfg.strings.add_chat_ask_name)
         bot.register_next_step_handler(message, _add_chat)
 

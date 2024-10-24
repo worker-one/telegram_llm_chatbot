@@ -1,10 +1,17 @@
 import os
+import io
 import logging.config
-
-import requests
+from datetime import datetime
+from PIL import Image
+from fastapi import UploadFile
 from omegaconf import OmegaConf
-
 from telegram_llm_chatbot.db import crud
+from hydra.utils import instantiate
+
+from telegram_llm_chatbot.core.llm import LLM
+from telegram_llm_chatbot.core.files import TextFileParser
+from telegram_llm_chatbot.core.exceptions import UnsupportedFileTypeException
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -21,6 +28,11 @@ def download_file(bot, file_id, file_path):
         file.write(downloaded_file)
     return file_path
 
+config_llm = OmegaConf.load("./src/telegram_llm_chatbot/conf/config_llm.yaml")
+model_config = instantiate(config_llm.llm.config.default)
+llm = LLM(model_config)
+
+text_file_parser = TextFileParser(max_file_size_mb=10, allowed_file_types={"txt", "doc", "docx", "pdf"})
 
 def is_command(message):
     if message.text is None:
@@ -29,7 +41,6 @@ def is_command(message):
         return True
     else:
         return False
-
 
 def register_handlers(bot):
     # Define the command for invoking the chatbot
@@ -40,23 +51,6 @@ def register_handlers(bot):
         # add user to database if not already present
         if crud.get_user(user_id) is None:
             crud.upsert_user(user_id, message.chat.username)
-
-        response = requests.get(f"{base_url}/users/users/{user_id}")
-        if response.status_code == 404:
-            # add user via api
-            response = requests.post(
-                f"{base_url}/users",
-                json={
-                    "user": {
-                        "id": user_id,
-                        "name": message.chat.username
-                    }
-                }
-            )
-            if response.status_code == 200:
-                logger.info(f"User with id {user_id} added successfully.")
-            else:
-                logger.error(f"Error adding user with id {user_id}: {response.json()['message']}")
 
         last_chat_id = crud.get_last_chat_id(user_id)
 
@@ -70,21 +64,50 @@ def register_handlers(bot):
             filename = message.photo[-1].file_name if message.content_type == "photo" else message.document.file_name
             user_input_image_path = f"./.tmp/files/{user_id}/{filename}"
             logger.info(msg="User event", extra={"user_id": user_id, "user_message": user_message})
-            try:
-                download_file(bot, file_id, user_input_image_path)
-                files = {"files": open(user_input_image_path, "rb")}
-                data = {"user_id": user_id, "chat_id": last_chat_id, "user_message": user_message}
-                response = requests.post(f"{base_url}/llm/query", files=files, data=data)
-            except Exception as e:
-                logger.error(f"Error downloading image: {e}")
-                bot.reply_to(message, f"Error downloading image: {e}")
-                return
+            
+            download_file(bot, file_id, user_input_image_path)
+            file = open(user_input_image_path, "rb")
+            file_extension = file.filename.rsplit(".", 1)[1].lower()
+            if file_extension in {"jpg", "jpeg", "png", "gif"}:
+                image_bytes = file.read()  # Read the file contents
+                image = Image.open(io.BytesIO(image_bytes))  # Convert to PIL Image
+
+            elif file_extension in {"pdf", "doc", "docx", "txt"}:
+                uploaded_file = UploadFile(
+                    filename=file.filename,
+                    file=io.BytesIO(file.read()),
+                    size=file.size,
+                    headers={"content-type": file.content_type}
+                )
+                text_content = text_file_parser.extract_content(uploaded_file)
+                user_message += f"\n{text_content}"
+            else:
+                raise UnsupportedFileTypeException(f"Unsupported file type: {file_extension}")
+            
         else:
             user_message = message.text
-            logger.info(msg="User event", extra={"user_id": user_id, "user_message": user_message})
-            data = {"user_id": user_id, "chat_id": last_chat_id, "user_message": user_message}
-            response = requests.post(f"{base_url}/llm/query", data=data)
+            image = None
+        
+        # add the message to the chat history if it exists
+        crud.create_message(last_chat_id, "user", content=user_message, timestamp=datetime.now())
 
-        response_content = response.json()['model_response']['response_content']
-        bot.send_chat_action(chat_id=user_id, action="typing")
-        bot.send_message(message.chat.id, response_content, parse_mode="markdown")
+        # get the chat history
+        chat_history = crud.get_chat_history(last_chat_id)
+
+
+        # Start with an empty message
+        sent_msg = bot.send_message(message.chat.id, "...")
+
+        # Initialize an empty string to accumulate the response
+        accumulated_response = ""
+
+        # Generate response using the LLM model and send chunks as they come
+        for chunk in llm.stream(chat_history, image=image):
+
+            accumulated_response += chunk.content
+
+            try:
+                # Edit the message with the accumulated response
+                bot.edit_message_text(accumulated_response, chat_id=message.chat.id, message_id=sent_msg.message_id)
+            except Exception:
+                continue

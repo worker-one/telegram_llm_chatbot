@@ -23,28 +23,8 @@ bot = telebot.TeleBot(BOT_TOKEN, parse_mode=None)
 
 cfg = OmegaConf.load("./src/telegram_llm_chatbot/conf/config.yaml")
 
-# Define the base URL of your API
-base_url = os.getenv("LLM_API")
-
 @bot.message_handler(commands=["help"])
 def help_command(message):
-    user_id = message.from_user.id
-
-    # add user to database if not already present
-    if crud.get_user(user_id) is None:
-        crud.upsert_user(user_id, message.chat.username)
-
-        # add user via api
-        response = requests.post(
-            f"{base_url}/add_user",
-            json={
-                "user": {
-                    "id": user_id,
-                    "name": message.chat.username
-                }
-            }
-        )
-
     bot.reply_to(message, cfg.strings.help)
 
 
@@ -53,10 +33,10 @@ def start_bot():
     
     chats.register_handlers(bot)
     llm.register_handlers(bot)
-    image.register_handlers(bot)
-    users.register_handlers(bot)
-    admin.register_handlers(bot)
-    welcome.register_handlers(bot)
+    # image.register_handlers(bot)
+    # users.register_handlers(bot)
+    # admin.register_handlers(bot)
+    # welcome.register_handlers(bot)
     
     #bot.infinity_polling()
     bot.polling()
