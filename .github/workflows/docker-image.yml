@@ -1,42 +1,43 @@
-name: Build and Push Docker Image
+name: Docker Image CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "dev" ]
+  pull_request:
+    branches: [ "dev" ]
 
 jobs:
+
   build:
+
     runs-on: ubuntu-latest
-    environment: global
+    environment: dev
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
+      - uses: actions/checkout@v4
       - name: Create .env file
         run: |
+          echo "LLM_API=${{ vars.LLM_API }}" >> .env
           echo "BOT_TOKEN=${{ vars.BOT_TOKEN }}" >> .env
           echo "DB_HOST=${{ vars.DB_HOST }}" >> .env
           echo "DB_PORT=${{ vars.DB_PORT }}" >> .env
           echo "DB_NAME=${{ vars.DB_NAME }}" >> .env
           echo "DB_USER=${{ vars.DB_USER }}" >> .env
           echo "DB_PASSWORD=${{ vars.DB_PASSWORD }}" >> .env
-
+          echo "OPENAI_API_KEY=${{ vars.OPENAI_API_KEY }}" >> .env
+          echo "FIREWORKS_API_KEY=${{ vars.FIREWORKS_API_KEY }}" >> .env
+  
       - name: Login to DockerHub
         uses: docker/login-action@v2
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ vars.DOCKERHUB_TOKEN }}
-
+  
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
           context: .
           push: true
-          tags: workerone/telegram_llm_chatbot:latest
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/telegram_llm_chatbot:dev
 
       - name: Log out from DockerHub
         run: docker logout
