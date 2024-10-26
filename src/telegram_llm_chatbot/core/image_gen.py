@@ -1,5 +1,6 @@
-from telegram_llm_chatbot.api.schemas import DalleConfig
 from openai import OpenAI
+
+from telegram_llm_chatbot.api.schemas import DalleConfig
 
 
 class Dalle3OpenAI:
