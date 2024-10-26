@@ -1,16 +1,16 @@
-from telegram_llm_chatbot.api.schemas import DalleConfig
+from llm_chatbot_api.api.schemas import ImageModelConfig
 from openai import OpenAI
 
 
 class Dalle3OpenAI:
     """Wrapper class for the OpenAI DALL-E model."""
 
-    def __init__(self, config: DalleConfig):
+    def __init__(self, config: ImageModelConfig):
         """Initialize the DALL-E model."""
         self.config = config
         self.client = OpenAI()
 
-    def update_config(self, config: DalleConfig) -> None:
+    def update_config(self, config: ImageModelConfig) -> None:
         """Update the configuration of the model."""
         for attr in ["model_name", "n", "quality", "size"]:
             if getattr(config, attr) is not None:

@@ -1,34 +1,31 @@
-import os
+import logging
+from datetime import datetime
+from typing import Optional
 
 import pandas as pd
-import psycopg2
 from dotenv import find_dotenv, load_dotenv
+from telegram_llm_chatbot.db.database import get_enginge
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 # Function to export table data to CSV
-def export_table_to_df(table_name: str) -> pd.DataFrame:
-    
+def export_table_to_df(table_name: str, start_date: Optional[datetime] = None) -> pd.DataFrame:
     load_dotenv(find_dotenv(usecwd=True))
 
-    # Retrieve environment variables
-    DB_HOST = os.getenv("DB_HOST")
-    DB_PORT = os.getenv("DB_PORT")
-    DB_NAME = os.getenv("DB_NAME")
-    DB_USER = os.getenv("DB_USER")
-    DB_PASSWORD = os.getenv("DB_PASSWORD")
+    # Establish a connection to the PostgreSQL database using the get_enginge function
+    engine = get_enginge()
 
-
-    # Establish a connection to the PostgreSQL database
-    conn = psycopg2.connect(
-        host=DB_HOST,
-        port=DB_PORT,
-        dbname=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD
-    )
-
-
+    df = pd.DataFrame()
     query = f"SELECT * FROM {table_name}"
-    df = pd.read_sql_query(query, conn)
-    conn.close()
+    if start_date:
+        query += f" WHERE timestamp >= '{start_date}'"
+
+    try:
+        df = pd.read_sql_query(query, engine)
+    except Exception as e:
+        logger.warning(f"Error exporting data from table {table_name}: {e}")
+        df = pd.DataFrame()
+
     return df

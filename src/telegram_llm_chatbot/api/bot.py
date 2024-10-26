@@ -1,20 +1,14 @@
 import logging.config
 import os
-import requests
 
 import telebot
 from dotenv import find_dotenv, load_dotenv
 from omegaconf import OmegaConf
 
-from telegram_llm_chatbot.api.handlers import chats, llm, users, admin
+from telegram_llm_chatbot.api.handlers import admin, chats, image_gen, llm, welcome
 from telegram_llm_chatbot.db import crud
 
-# Load logging configuration with OmegaConf
-logging_config = OmegaConf.to_container(
-    OmegaConf.load("./src/telegram_llm_chatbot/conf/logging_config.yaml"),
-    resolve=True
-)
-logging.config.dictConfig(logging_config)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 load_dotenv(find_dotenv(usecwd=True))  # Load environment variables from .env file
@@ -26,38 +20,29 @@ if BOT_TOKEN is None:
 
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode=None)
 
-cfg = OmegaConf.load("./src/telegram_llm_chatbot/conf/config.yaml")
+strings = OmegaConf.load("./src/telegram_llm_chatbot/conf/strings.yaml")
 
-# Define the base URL of your API
-base_url = cfg.service.base_url
 
 @bot.message_handler(commands=["help"])
 def help_command(message):
-    user_id = message.from_user.id
-
+    """Handle the /help command."""
+    user_id = int(message.chat.id)
     # add user to database if not already present
     if crud.get_user(user_id) is None:
+        logger.info("New user {message.chat.username} added to database.")
         crud.upsert_user(user_id, message.chat.username)
-
-        # add user via api
-        response = requests.post(
-            f"{base_url}/add_user",
-            json={
-                "user": {
-                    "id": user_id,
-                    "name": message.chat.username
-                }
-            }
-        )
-
-    bot.reply_to(message, cfg.strings.help)
+    bot.reply_to(message, strings.strings.help)
 
 
 def start_bot():
+    """Start the bot."""
     logger.info(f"Bot `{str(bot.get_me().username)}` has started")
+
     chats.register_handlers(bot)
     llm.register_handlers(bot)
-    users.register_handlers(bot)
+    image_gen.register_handlers(bot)
     admin.register_handlers(bot)
-    #bot.infinity_polling()
+    welcome.register_handlers(bot)
+
+    # bot.infinity_polling()
     bot.polling()
