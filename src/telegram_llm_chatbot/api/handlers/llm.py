@@ -111,6 +111,7 @@ def register_handlers(bot):
         config_llm = OmegaConf.load("./src/telegram_llm_chatbot/conf/llm.yaml")
         model_config = instantiate(config_llm.custom)
         llm = LLM(model_config)
+        logger.info(f"Loaded LLM model with config: {model_config.dict()}")
 
         if llm.config.stream:
             # Inform the user about processing

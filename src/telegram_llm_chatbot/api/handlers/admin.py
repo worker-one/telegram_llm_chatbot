@@ -3,6 +3,7 @@ import logging
 import logging.config
 import os
 
+import yaml
 from omegaconf import OmegaConf
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
@@ -14,7 +15,6 @@ strings = OmegaConf.load("./src/telegram_llm_chatbot/conf/strings.yaml")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 
 def create_admin_menu_markup(strings):
     """Create the admin menu markup."""
@@ -99,3 +99,95 @@ def register_handlers(bot):
             bot.send_document(user_id, open(filename, "rb"))
             # remove the file
             os.remove(filename)
+    import yaml
+
+def register_handlers(bot):
+    """Register handlers for the bot."""
+
+    @bot.message_handler(commands=["admin"])
+    def admin_menu_command(message):
+        user_id = message.from_user.id
+        user = get_user(user_id)
+
+        if user.name.lower() not in ["sashagvozd", "konverner"]:
+            # inform that the user does not have rights
+            bot.send_message(user_id, strings.no_rights.format(username=user.name))
+            return
+
+        # Send the admin menu
+        bot.send_message(user_id, strings.admin_menu.title, reply_markup=create_admin_menu_markup(strings))
+
+    @bot.callback_query_handler(func=lambda call: call.data == "_export_data")
+    def export_data_handler(call):
+        user_id = call.from_user.id
+
+        # Send period selection menu
+        bot.send_message(
+            user_id, strings.admin_menu.select_period, reply_markup=create_period_selection_markup(strings)
+        )
+
+    @bot.callback_query_handler(func=lambda call: call.data.startswith("_period_"))
+    def period_selection_handler(call):
+        user_id = call.from_user.id
+
+        period = call.data.split("_period_")[1]
+        start_date = None
+
+        if period == "today":
+            start_date = datetime.datetime.now().date()
+        elif period == "week":
+            start_date = datetime.datetime.now().date() - datetime.timedelta(days=7)
+        elif period == "month":
+            start_date = datetime.datetime.now().date() - datetime.timedelta(days=30)
+        elif period == "two_weeks":
+            start_date = datetime.datetime.now().date() - datetime.timedelta(days=14)
+        else:
+            start_date = None
+
+        # Export data
+        tables = ["chats", "messages", "users"]
+        for table in tables:
+            df = export_table_to_df(table, start_date=start_date)
+
+            # create a temp folder if it does not exist
+            if not os.path.exists("temp"):
+                os.makedirs("temp")
+
+            # save as excel in temp folder and send to a user
+            filename = f"temp/{table}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+            df.to_excel(filename, index=False)
+            bot.send_document(user_id, open(filename, "rb"))
+            # remove the file
+            os.remove(filename)
+
+    @bot.callback_query_handler(func=lambda call: call.data == "_configure_language_model")
+    def configure_language_model_handler(call):
+        user_id = call.from_user.id
+
+        # Ask for new configuration values
+        msg = bot.send_message(user_id, strings.admin_menu.enter_new_config)
+        bot.register_next_step_handler(msg, process_new_config)
+
+    def process_new_config(message):
+        user_id = message.from_user.id
+        new_config = message.text
+
+        try:
+            # Parse the new configuration values
+            new_config_dict = yaml.safe_load(new_config)
+
+            # Load the existing llm.yaml file
+            with open("./src/telegram_llm_chatbot/conf/llm.yaml", "r") as file:
+                llm_config = yaml.safe_load(file)
+
+            # Update the custom key with new values
+            llm_config["custom"].update(new_config_dict)
+
+            # Save the updated configuration back to the file
+            with open("./src/telegram_llm_chatbot/conf/llm.yaml", "w") as file:
+                yaml.safe_dump(llm_config, file)
+
+            bot.send_message(user_id, strings.admin_menu.config_updated)
+        except Exception as e:
+            logger.error(f"Failed to update configuration: {e}")
+            bot.send_message(user_id, strings.admin_menu.config_update_failed)

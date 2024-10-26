@@ -3,6 +3,7 @@ admin_menu:
   title: "Admin menu 🔑"
   configure_language_model: "Configure language model"
   configure_image_model: "Configure image model"
+  enter_new_config: "Enter new configuration:"
   export_data: "Export data"
   select_period: "Select period"
   period_today: "Today"
