@@ -1,11 +1,17 @@
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Integer, String
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import DeclarativeBase, relationship
 
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    """Base model"""
+
+    pass
+
 
 class User(Base):
-    __tablename__ = 'users'
+    """User model"""
+
+    __tablename__ = "users"
 
     id = Column(BigInteger, unique=True, primary_key=True, index=True)
     name = Column(String, index=True)
@@ -16,7 +22,9 @@ class User(Base):
 
 
 class Chat(Base):
-    __tablename__ = 'chats'
+    """Chat model"""
+
+    __tablename__ = "chats"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column(BigInteger, ForeignKey("users.id"))
@@ -28,7 +36,9 @@ class Chat(Base):
 
 
 class Message(Base):
-    __tablename__ = 'messages'
+    """Message model"""
+
+    __tablename__ = "messages"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     chat_id = Column(Integer, ForeignKey("chats.id"))

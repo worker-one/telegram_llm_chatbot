@@ -29,17 +29,20 @@ if not all([DB_HOST, DB_NAME, DB_USER, DB_PASSWORD]):
 # Construct the database URL
 DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode=require"
 
+
 def get_enginge():
-    return create_engine(
-        DATABASE_URL,
-        poolclass=NullPool
-    )
+    """Get a new engine object."""
+    return create_engine(DATABASE_URL, poolclass=NullPool)
+
 
 def create_tables():
+    """Create tables in the database."""
     engine = get_enginge()
     Base.metadata.create_all(engine)
     logger.info("Tables created")
 
+
 def get_session():
+    """Get a new session object."""
     engine = get_enginge()
     return sessionmaker(bind=engine)()

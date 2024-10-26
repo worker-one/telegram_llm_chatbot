@@ -1,5 +1,5 @@
 dalle3:
-  _target_: telegram_llm_chatbot.api.schemas.ImageModelConfig
+  _target_: telegram_llm_chatbot.api.schemas.DalleConfig
   model_name: "dall-e-3"
   n: 1
   quality: "standard"

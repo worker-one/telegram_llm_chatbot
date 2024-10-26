@@ -1,12 +1,11 @@
 import base64
 import io
-from io import BytesIO
+import os
 from typing import Set
 
 import docx
 from docx.oxml.table import CT_Tbl
 from docx.oxml.text.paragraph import CT_P
-from fastapi import UploadFile
 from PIL import Image
 from PyPDF2 import PdfReader
 
@@ -24,15 +23,17 @@ class TextFileParser:
     """Class to parse and extract content from uploaded files."""
 
     def __init__(self, max_file_size_mb: int, allowed_file_types: Set[str]):
+        """Initialize the TextFileParser."""
         self.max_file_size_mb = max_file_size_mb
         self.handlers = {
             "txt": self.extract_txt_content,
             "doc": self.extract_word_content,
             "docx": self.extract_word_content,
-            "pdf": self.extract_pdf_content
+            "pdf": self.extract_pdf_content,
         }
+        self.allowed_file_types = allowed_file_types
 
-    def extract_txt_content(self, file: UploadFile) -> str:
+    def extract_txt_content(self, file_path: str) -> str:
         """Extract content from a text file.
 
         Returns:
@@ -43,14 +44,14 @@ class TextFileParser:
             UnexpectedFileReadingException: Unexpected error while reading the text file.
         """
         try:
-            content = file.file.read()
-            return content.decode("utf-8")
+            with open(file_path, encoding="utf-8") as file:
+                return file.read()
         except UnicodeDecodeError as e:
             raise TextFileDecodingException() from e
         except Exception as e:
             raise UnexpectedFileReadingException() from e
 
-    def extract_word_content(self, file: UploadFile) -> str:
+    def extract_word_content(self, file_path: str) -> str:
         """Extract content from a Word document.
 
         Extract the text content from paragraphs and
@@ -62,7 +63,7 @@ class TextFileParser:
             WordFileReadingException: Error reading the Word document.
         """
         try:
-            doc = docx.Document(file.file)
+            doc = docx.Document(file_path)
             content = []
 
             for element in doc.element.body:
@@ -80,17 +81,16 @@ class TextFileParser:
                     for table in doc.tables:
                         if table._element == element:
                             for row in table.rows:
-                                row_text = '\t'.join(cell.text.strip() for cell in row.cells)
+                                row_text = "\t".join(cell.text.strip() for cell in row.cells)
                                 content.append(row_text)
-                            content.append('')
+                            content.append("")
                             break
 
-            return '\n'.join(content)
+            return "\n".join(content)
         except Exception as e:
             raise WordFileReadingException() from e
 
-
-    def extract_pdf_content(self, file: UploadFile) -> str:
+    def extract_pdf_content(self, file_path: str) -> str:
         """Extract content from a PDF file.
 
         Returns:
@@ -100,7 +100,7 @@ class TextFileParser:
             PDFFileReadingException: Error reading the PDF file.
         """
         try:
-            pdf = PdfReader(BytesIO(file.file.read()))
+            pdf = PdfReader(file_path)
             content = ""
             for page in pdf.pages:
                 content += page.extract_text()
@@ -108,7 +108,7 @@ class TextFileParser:
         except Exception as e:
             raise PDFFileReadingException() from e
 
-    def extract_content(self, file: UploadFile) -> str:
+    def extract_content(self, file_path: str) -> str:
         """Extract content from an uploaded file based on its type.
 
         Returns:
@@ -121,18 +121,18 @@ class TextFileParser:
             WordFileReadingException: Error reading the Word document.
             UnexpectedFileReadingException: Unexpected error while reading the file.
         """
-        if file.size > self.max_file_size_mb * 1024 * 1024:
+        if os.path.getsize(file_path) > self.max_file_size_mb * 1024 * 1024:
             raise FileTooLargeException()
 
         try:
-            file_extension = file.filename.rsplit(".", 1)[1].lower()
+            file_extension = file_path.rsplit(".", 1)[1].lower()
         except IndexError:
-            raise UnsupportedFileTypeException("The file has no extension")
+            raise UnsupportedFileTypeException("The file has no extension")  # noqa: WPS326
 
         handler = self.handlers.get(file_extension)
         if handler:
             try:
-                return handler(file)
+                return handler(file_path)
             except UnsupportedFileTypeException as e:
                 raise e
             except TextFileDecodingException as e:

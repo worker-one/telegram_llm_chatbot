@@ -1,73 +1,74 @@
 from datetime import datetime
 from typing import Literal, Optional
 
-from pydantic import BaseModel, confloat, conint
+from pydantic import BaseModel
 
 
-class Message(BaseModel):
+class Message(BaseModel):  # noqa: D101
     chat_id: str
     role: str
     content: str
     timestemp: datetime
 
-class User(BaseModel):
+
+class User(BaseModel):  # noqa: D101
     id: int
     name: str
 
-class Chat(BaseModel):
+
+class Chat(BaseModel):  # noqa: D101
     user_id: int
     chat_id: int
     chat_name: str
 
-class AddUserRequest(BaseModel):
+
+class AddUserRequest(BaseModel):  # noqa: D101
     user: User
 
-class AddChatRequest(BaseModel):
+
+class AddChatRequest(BaseModel):  # noqa: D101
     user_id: int
     chat_name: str
 
-class DeleteChatRequest(BaseModel):
+
+class DeleteChatRequest(BaseModel):  # noqa: D101
     user_id: int
     chat_id: int
 
-class DeleteChatResponse(BaseModel):
+
+class DeleteChatResponse(BaseModel):  # noqa: D101
     chat_id: int
 
-class GetChatsRequest(BaseModel):
+
+class GetChatsRequest(BaseModel):  # noqa: D101
     user_id: int
 
-class GetChatsResponse(BaseModel):
+
+class GetChatsResponse(BaseModel):  # noqa: D101
     chats: list[Chat]
 
-class ModelConfig(BaseModel):
+
+class ModelConfig(BaseModel):  # noqa: D101
     model_name: Optional[str] = None
     provider: Optional[str] = None
-    max_tokens: Optional[conint(ge=0)] = None
-    chat_history_limit: Optional[conint(ge=0)] = None
-    temperature: Optional[confloat(ge=0.0)] = None
+    max_tokens: Optional[int] = None
+    chat_history_limit: int = 10
+    temperature: float = 0.5
     stream: Optional[bool] = True
 
-class ModelResponse(BaseModel):
+
+class ModelResponse(BaseModel):  # noqa: D101
     response_content: str
     config: ModelConfig
 
-class QueryModelRequest(BaseModel):
-    user_id: conint(ge=0)
-    chat_id: conint(ge=0)
-    user_message: str
-    config: Optional[ModelConfig] = None
 
-class QueryModelResponse(BaseModel):
-    user_id: conint(ge=0)
-    chat_id: conint(ge=0)
-    model_response: ModelResponse
-
-class ImageModelConfig(BaseModel):
+class DalleConfig(BaseModel):  # noqa: D101
     model_name: Optional[str] = "dall-e-2"  # The name of the model to use for image generation
-    n: Optional[conint(ge=0)] = 1  # Number of images to generate
+    n: Optional[int] = 1  # Number of images to generate
     quality: Literal["standard", "hd"] = "standard"  # The quality of the generated images
     size: Optional[str] = "1024x1024"  # The size of the generated images
 
-class ImageModelResponse(BaseModel):
+
+class DalleResponse(BaseModel):  # noqa: D101
     response_content: list[dict[str, str]]
-    config: Optional[ImageModelConfig] = None
+    config: Optional[DalleConfig] = None

@@ -1,119 +1,134 @@
 import io
-import logging.config
+import logging
 import os
 from datetime import datetime
 
-from fastapi import UploadFile
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
 from PIL import Image
 
-from telegram_llm_chatbot.core.exceptions import UnsupportedFileTypeException
+from telegram_llm_chatbot.api.common import download_file, is_command, user_sign_in
 from telegram_llm_chatbot.core.files import TextFileParser
 from telegram_llm_chatbot.core.llm import LLM
 from telegram_llm_chatbot.db import crud
 
+# Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-cfg = OmegaConf.load("./src/telegram_llm_chatbot/conf/config.yaml")
-base_url = os.getenv("LLM_API")
+# Define constants
+TEMP_DIR = "./.tmp/files"
+ALLOWED_IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "gif"}
+ALLOWED_TEXT_EXTENSIONS = {"pdf", "doc", "docx", "txt"}
+MAX_FILE_SIZE_MB = 10
+MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024  # 10 MB
 
-def download_file(bot, file_id, file_path):
-    file_info = bot.get_file(file_id)
-    downloaded_file = bot.download_file(file_info.file_path)
-    if not os.path.exists(os.path.dirname(file_path)):
-        os.makedirs(os.path.dirname(file_path))
-    with open(file_path, "wb") as file:
-        file.write(downloaded_file)
-    return file_path
+# Initialize file parser
+text_file_parser = TextFileParser(max_file_size_mb=MAX_FILE_SIZE_MB, allowed_file_types=ALLOWED_TEXT_EXTENSIONS)
 
-config_llm = OmegaConf.load("./src/telegram_llm_chatbot/conf/config_llm.yaml")
-model_config = instantiate(config_llm.llm.config.default)
-llm = LLM(model_config)
-
-text_file_parser = TextFileParser(max_file_size_mb=10, allowed_file_types={"txt", "doc", "docx", "pdf"})
-
-def is_command(message):
-    if message.text is None:
-        return False
-    elif message.text.startswith("/"):
-        return True
-    else:
-        return False
 
 def register_handlers(bot):
     # Define the command for invoking the chatbot
-    @bot.message_handler(func=lambda message: not is_command(message), content_types=['text', 'photo', 'document'])
+    @bot.message_handler(func=lambda message: not is_command(message), content_types=["text", "photo", "document"])
     def invoke_chatbot(message):
         user_id = int(message.chat.id)
-
-        # add user to database if not already present
-        if crud.get_user(user_id) is None:
-            crud.upsert_user(user_id, message.chat.username)
+        user_sign_in(user_id, message)
 
         last_chat_id = crud.get_last_chat_id(user_id)
-
         if last_chat_id is None:
-            # pick the first chat if no chat is selected
+            # Pick the first chat if no chat is selected
             chats = crud.get_user_chats(user_id)
             if chats:
                 last_chat_id = chats[0].id
-                crud.update_user_last_chat_id(user_id, last_chat_id)
+                bot.send_message(user_id, f"Are you are in the chat {chats[0].name}")
             else:
                 # Create a new chat
-                bot.reply_to(message, cfg.strings.no_chats)
+                chat = crud.create_chat(user_id, "New chat")
+                last_chat_id = chat.id
+                bot.send_message(user_id, "No chat selected. Created a new chat.")
+            crud.update_user_last_chat_id(user_id, last_chat_id)
 
+        user_message = message.caption if message.caption else ""
         image = None
+
         if message.content_type in ["photo", "document"]:
-            user_message = message.caption if message.caption else ""
-            file_id = message.photo[-1].file_id if message.content_type == "photo" else message.document.file_id
-            filename = message.photo[-1].file_name if message.content_type == "photo" else message.document.file_name
-            user_input_image_path = f"./.tmp/files/{user_id}/{filename}"
-            logger.info(msg="User event", extra={"user_id": user_id, "user_message": user_message})
-            download_file(bot, file_id, user_input_image_path)
-            file = open(user_input_image_path, "rb")
-            file_extension = filename.rsplit(".", 1)[1].lower()
-            if file_extension in {"jpg", "jpeg", "png", "gif"}:
-                image_bytes = file.read()  # Read the file contents
-                image = Image.open(io.BytesIO(image_bytes))  # Convert to PIL Image
+            # Extract file information
+            if message.content_type == "photo":
+                file_info = message.photo[-1]
+            else:  # "document"
+                file_info = message.document
 
-            elif file_extension in {"pdf", "doc", "docx", "txt"}:
-                uploaded_file = UploadFile(
-                    filename=filename,
-                    file=io.BytesIO(file.read()),
-                    size=os.path.getsize(user_input_image_path)
-                )
-                text_content = text_file_parser.extract_content(uploaded_file)
-                user_message += f"\n{text_content}"
-            else:
-                raise UnsupportedFileTypeException(f"Unsupported file type: {file_extension}")
+            file_id = file_info.file_id
+            filename = getattr(file_info, "file_name", f"file_{file_id}")
+            user_input_file_path = os.path.join(TEMP_DIR, str(user_id), filename)
 
-        else:
+            logger.info("User event", extra={"user_id": user_id, "user_message": user_message})
+
+            # Ensure the directory exists
+            os.makedirs(os.path.dirname(user_input_file_path), exist_ok=True)
+            download_file(bot, file_id, user_input_file_path)
+
+            # Validate file size before processing
+            if os.path.getsize(user_input_file_path) > MAX_FILE_SIZE:
+                bot.reply_to(message, f"File size exceeds the maximum allowed size of {MAX_FILE_SIZE_MB} MB.")
+                return
+
+            file_extension = filename.rsplit(".", 1)[-1].lower()
+
+            try:
+                if file_extension in ALLOWED_IMAGE_EXTENSIONS:
+                    with open(user_input_file_path, "rb") as file_obj:
+                        image_bytes = file_obj.read()
+                        image = Image.open(io.BytesIO(image_bytes))
+                elif file_extension in ALLOWED_TEXT_EXTENSIONS:
+                    text_content = text_file_parser.extract_content(user_input_file_path)
+                    user_message += f"\n{text_content}"
+                else:
+                    bot.reply_to(message, f"Unsupported file type: {file_extension}")
+                    return
+            except Exception as e:
+                logger.error(f"Error processing file: {e}")
+                bot.reply_to(message, "An error occurred while processing your file.")
+                return
+            finally:
+                # Clean up temporary file
+                if os.path.exists(user_input_file_path):
+                    os.remove(user_input_file_path)
+        elif message.content_type == "text":
             user_message = message.text
+        else:
+            bot.reply_to(message, "Unsupported content type.")
+            return
 
-        # add the message to the chat history if it exists
+        # Truncate and add the message to the chat history
+        user_message = user_message[:10000]
         crud.create_message(last_chat_id, "user", content=user_message, timestamp=datetime.now())
 
-        # get the chat history
+        # Retrieve chat history
         chat_history = crud.get_chat_history(last_chat_id)
 
+        # Load configurations
+        config_llm = OmegaConf.load("./src/telegram_llm_chatbot/conf/llm.yaml")
+        model_config = instantiate(config_llm.custom)
+        llm = LLM(model_config)
+
         if llm.config.stream:
-            # Start with an empty message
+            # Inform the user about processing
             sent_msg = bot.send_message(message.chat.id, "...")
-
-            # Initialize an empty string to accumulate the response
             accumulated_response = ""
-            # Generate response using the LLM model and send chunks as they come
-            for chunk in llm.run(chat_history, image=image):
-                accumulated_response += chunk.content
 
-                try:
-                    # Edit the message with the accumulated response
-                    bot.edit_message_text(accumulated_response, chat_id=message.chat.id, message_id=sent_msg.message_id)
-                except Exception:
-                    continue
+            # Generate response and send chunks
+            for idx, chunk in enumerate(llm.run(chat_history, image=image)):
+                accumulated_response += chunk.content
+                if idx % 8 == 0:
+                    try:
+                        bot.edit_message_text(
+                            accumulated_response, chat_id=message.chat.id, message_id=sent_msg.message_id
+                        )
+                    except Exception as e:
+                        logger.error(f"Failed to edit message: {e}")
+                        continue
         else:
-            # Generate response using the LLM model
+            # Generate and send the final response
             response = llm.run(chat_history, image=image)
             bot.send_message(message.chat.id, response.response_content)
