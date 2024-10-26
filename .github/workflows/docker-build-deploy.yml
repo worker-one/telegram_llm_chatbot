@@ -37,7 +37,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.project_name }}:$GITHUB_REF-$GITHUB_EVENT_NAME-$environment
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.project_name }}:${{ env.environment }}
 
       - name: Log out from DockerHub
         run: docker logout
@@ -57,12 +57,12 @@ jobs:
           username: ${{ vars.SERVER_USER }}
           password: ${{ vars.SSH_PASSWORD }}
           script: |
-            current_container=$(docker ps --filter "ancestor=${{ vars.DOCKERHUB_USERNAME }}/${{ vars.project_name }}:$GITHUB_REF-$GITHUB_EVENT_NAME-$environment" --format "{{.Names}}")
+            current_container=$(docker ps --filter "ancestor=${{ vars.DOCKERHUB_USERNAME }}/${{ vars.project_name }}:${{ env.environment }}" --format "{{.Names}}")
             if [ -n "$current_container" ]; then
               docker stop $current_container
               docker rm $current_container
             fi
-            docker pull ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.project_name }}:$GITHUB_REF-$GITHUB_EVENT_NAME-$environment
+            docker pull ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.project_name }}:${{ env.environment }}
             docker stop current_container_name || true
             docker rm current_container_name || true
-            docker run -d --name current_container_name -p 80:80 ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.project_name }}:$GITHUB_REF-$GITHUB_EVENT_NAME-$environment
+            docker run -d --name current_container_name -p 80:80 ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.project_name }}:${{ env.environment }}
