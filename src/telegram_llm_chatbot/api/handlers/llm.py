@@ -121,7 +121,7 @@ def register_handlers(bot):
             # Generate response and send chunks
             for idx, chunk in enumerate(llm.run(chat_history, image=image)):
                 accumulated_response += chunk.content
-                if idx % 8 == 0:
+                if idx % 20 == 0:
                     try:
                         bot.edit_message_text(
                             accumulated_response, chat_id=message.chat.id, message_id=sent_msg.message_id
