@@ -1,3 +1,4 @@
+
 name: Docker Image CI
 
 on:
@@ -25,19 +26,45 @@ jobs:
           echo "DB_PASSWORD=${{ vars.DB_PASSWORD }}" >> .env
           echo "OPENAI_API_KEY=${{ vars.OPENAI_API_KEY }}" >> .env
           echo "FIREWORKS_API_KEY=${{ vars.FIREWORKS_API_KEY }}" >> .env
-  
+
       - name: Login to DockerHub
         uses: docker/login-action@v2
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ vars.DOCKERHUB_TOKEN }}
-  
+
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
           context: .
           push: true
-          tags: ${{ vars.DOCKERHUB_USERNAME }}/telegram_llm_chatbot:latest
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.project_name }}:main
 
       - name: Log out from DockerHub
         run: docker logout
+
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - name: logging
+        run: |
+          echo ${{ vars.SERVER_HOST }}
+      - name: SSH into server and pull image
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ vars.SERVER_HOST }}
+          username: ${{ vars.SERVER_USER }}
+          password: ${{ vars.SSH_PASSWORD }}
+          script: |
+            current_container=$(docker ps --filter "ancestor=${{ vars.DOCKERHUB_USERNAME }}/${{ vars.project_name }}:main" --format "{{.Names}}")
+            if [ -n "$current_container" ]; then
+              docker stop $current_container
+              docker rm $current_container
+            fi
+            docker pull ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.project_name }}:main
+            docker stop current_container_name || true
+            docker rm current_container_name || true
+            docker run -d --name current_container_name -p 80:80 ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.project_name }}:main
