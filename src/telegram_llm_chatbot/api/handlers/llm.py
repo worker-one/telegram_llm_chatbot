@@ -129,6 +129,11 @@ def register_handlers(bot):
                     except Exception as e:
                         logger.error(f"Failed to edit message: {e}")
                         continue
+                if idx > 200:
+                    continue
+            bot.edit_message_text(
+                            accumulated_response, chat_id=message.chat.id, message_id=sent_msg.message_id
+                        )
         else:
             # Generate and send the final response
             response = llm.run(chat_history, image=image)
