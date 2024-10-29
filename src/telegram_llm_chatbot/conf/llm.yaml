@@ -5,7 +5,7 @@ fireworksai_llama:
   max_tokens: 2500
   temperature: 0.7
   provider: "fireworksai"
-  stream: true
+  stream: false
 
 openai_gpt4o:
   _target_: telegram_llm_chatbot.api.schemas.ModelConfig
@@ -23,4 +23,4 @@ custom:
   max_tokens: 2500
   temperature: 0.7
   provider: "openai"
-  stream: true
+  stream: false
