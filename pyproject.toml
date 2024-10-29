@@ -23,11 +23,19 @@ dependencies = [
     "requests",
     "pyTelegramBotAPI==4.20.0",
     "omegaconf==2.3.0",
-    "sqlalchemy==1.4.25",
+    "sqlalchemy==2.0.35",
+    "hydra-core",
+    "omegaconf",
+    "langchain_fireworks",
+    "langchain_openai",
+    "langchain_core",
     "psycopg2-binary",
+    "Pillow",
     "python-dotenv",
     "pandas==2.1.4",
-    "openpyxl"
+    "openpyxl",
+    "python-docx==1.1.2",
+    "PyPDF2==3.0.0"
 ]
 
 [project.optional-dependencies]

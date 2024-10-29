@@ -2,7 +2,6 @@ import logging.config
 import os
 
 from dotenv import find_dotenv, load_dotenv
-from omegaconf import OmegaConf
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
@@ -10,15 +9,7 @@ from sqlalchemy.pool import NullPool
 from .models import Base
 
 # Load logging configuration with OmegaConf
-logging_config = OmegaConf.to_container(
-    OmegaConf.load("./src/telegram_llm_chatbot/conf/logging_config.yaml"),
-    resolve=True
-)
-
-# Apply the logging configuration
-logging.config.dictConfig(logging_config)
-
-# Configure logging
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 load_dotenv(find_dotenv(usecwd=True))
@@ -38,17 +29,20 @@ if not all([DB_HOST, DB_NAME, DB_USER, DB_PASSWORD]):
 # Construct the database URL
 DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode=require"
 
+
 def get_enginge():
-    return create_engine(
-        DATABASE_URL,
-        connect_args={'connect_timeout': 5},
-        poolclass=NullPool
-    )
+    """Get a new engine object."""
+    return create_engine(DATABASE_URL, poolclass=NullPool)
+
+
 def create_tables():
+    """Create tables in the database."""
     engine = get_enginge()
     Base.metadata.create_all(engine)
     logger.info("Tables created")
 
+
 def get_session():
+    """Get a new session object."""
     engine = get_enginge()
     return sessionmaker(bind=engine)()
