@@ -44,5 +44,5 @@ def start_bot():
     admin.register_handlers(bot)
     welcome.register_handlers(bot)
 
-    bot.infinity_polling()
+    bot.infinity_polling(timeout=90)
     #bot.polling()
