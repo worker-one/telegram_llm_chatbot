@@ -33,7 +33,7 @@ def register_handlers(bot):
             try:
                 bot.reply_to(message, strings.image_gen.please_wait)
                 response_content = dalle3.generate_image(prompt=user_message)
-                image_response = requests.get(response_content, timeout=10)
+                image_response = requests.get(response_content, timeout=(60,200))
                 if image_response.status_code == 200:
                     bot.send_chat_action(chat_id=user_id, action="upload_photo")
                     bot.send_photo(chat_id=user_id, photo=image_response.content)
