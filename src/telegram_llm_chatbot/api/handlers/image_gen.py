@@ -33,13 +33,13 @@ def register_handlers(bot):
             try:
                 bot.reply_to(message, strings.image_gen.please_wait)
                 response_content = dalle3.generate_image(prompt=user_message)
-                image_response = requests.get(response_content, timeout=(60, 200))
+                image_response = requests.get(response_content, timeout=(160, 360))
                 if image_response.status_code == 200:
                     bot.send_chat_action(chat_id=user_id, action="upload_photo")
                     bot.send_photo(chat_id=user_id, photo=image_response.content)
                 else:
                     bot.reply_to(message, "Error downloading the image.")
             except Exception as e:
-                bot.reply_to(message, f"Error generating image: {str(e)}")
+                bot.reply_to(message, response_content)
 
         bot.register_next_step_handler(message, handle_description)
