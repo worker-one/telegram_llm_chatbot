@@ -11,7 +11,7 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    environment: main
+    environment: prod
     steps:
       - uses: actions/checkout@v4
       - name: Create .env file
@@ -46,7 +46,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    environment: main
+    environment: prod
     steps:
       - name: logging
         run: |
