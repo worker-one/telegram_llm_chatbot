@@ -187,7 +187,7 @@ def register_handlers(bot):
             with open("./src/telegram_llm_chatbot/conf/llm.yaml", "w") as file:
                 yaml.safe_dump(llm_config, file)
 
-            bot.send_message(user_id, strings.admin_menu.config_updated)
+            bot.send_message(user_id, strings.admin_menu.config_update_success)
         except Exception as e:
             logger.error(f"Failed to update configuration: {e}")
             bot.send_message(user_id, strings.admin_menu.config_update_failed)
