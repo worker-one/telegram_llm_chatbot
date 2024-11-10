@@ -1,8 +1,21 @@
 no_rights: "The user {username} does not have admin rights."
+
+account:
+  no_subscription: "You have no active subscription. Please subscribe to use this feature."
+  subscription: |
+    Username: {username}
+    Plan: {plan}
+    Status: {status}
+    Start date: {start_date}
+    End date: {end_date}
+
 admin_menu:
   title: "Admin menu 🔑"
   configure_language_model: "Configure language model"
   configure_image_model: "Configure image model"
+  list_subscription_plan: "List subscription plans"
+  configure_subscription_plan: "Add subscription plan"
+  remove_subscription_plan: "Remove subscription plan"
   enter_new_config: "Enter new configuration:"
   config_update_failed: "Configuration update failed."
   config_update_success: "Configuration updated successfully."
@@ -13,9 +26,25 @@ admin_menu:
   period_month: "Month"
   period_two_weeks: "Two weeks"
   period_all: "All"
+
 image_gen:
   ask_description: "Enter the description of the image:"
   please_wait: "Generating image..."
+
+configure_subscription_ask: |
+  Enter new subscription data in the following format
+  name
+  description
+  price
+  price currency (USD, EUR, RUB)
+  duration in days
+remove_subscription_ask: "Enter name of subscription plan to remove"
+subscription_plan_removed: "Subscription plan removed: {plan}"
+subscription_plan_not_found: "Subscription plan not found"
+subscription_plan_created: "Subscription plan created:\n{plan}"
+subscription_plan_not_created: "Subscription plan not created: {error}"
+payment_successful: "Payment for {product_name} successful"
+
 add_chat_ask_name: "Enter the name of the chat:"
 add_chat_success: "Chat `{chat_name}` has been added successfully."
 add_chat_error: "Chat `{chat_name}` has not been added."
@@ -28,6 +57,7 @@ handle_callback_query_success: "You have selected chat `{chat_name}`"
 delete_chat_ask: "Choose a chat to delete:"
 delete_chat_success: "Chat `{chat_name}` has been deleted successfully."
 no_chats: "You have no chats. Use menu to add a chat."
+
 help: |
   Как пользоваться 
   
@@ -39,6 +69,6 @@ help: |
   
   2. Количество чатов неограниченно. 
   
-  Создание нового чата и переход между ними также осуществляется через Меню. 
+  Создание нового чата и переход между ними также осуществляется через Меню.
   
   Приятного использования 🤝

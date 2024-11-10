@@ -1,4 +1,5 @@
-from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Integer, String
+from locale import currency
+from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey, Integer, Numeric, String
 from sqlalchemy.orm import DeclarativeBase, relationship
 
 
@@ -15,6 +16,7 @@ class User(Base):
 
     id = Column(BigInteger, unique=True, primary_key=True, index=True)
     name = Column(String, index=True)
+    role = Column(String, default="user")
     current_chat_id = Column(Integer)
 
     # Establish relationship with Chat and enable cascade deletion
@@ -45,3 +47,44 @@ class Message(Base):
     role = Column(String)
     content = Column(String)
     timestamp = Column(DateTime)
+
+
+class SubscriptionPlan(Base):
+    __tablename__ = "subscription_plans"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    description = Column(String, nullable=True)
+    price = Column(Numeric(10, 2))
+    currency = Column(String, default="USD")
+    duration_in_days = Column(Integer)
+
+    subscriptions = relationship("Subscription", back_populates="plan")
+
+class Subscription(Base):
+    __tablename__ = "subscriptions"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(BigInteger, ForeignKey("users.id"))
+    plan_id = Column(Integer, ForeignKey("subscription_plans.id"))
+    start_date = Column(DateTime)
+    end_date = Column(DateTime)
+    status = Column(Enum("active", "inactive", "canceled", name="subscription_status"))
+
+    user = relationship("User", back_populates="subscriptions")
+    plan = relationship("SubscriptionPlan", back_populates="subscriptions")
+    payments = relationship("Payment", back_populates="subscription")
+
+class Payment(Base):
+    __tablename__ = "payments"
+
+    id = Column(Integer, primary_key=True)
+    subscription_id = Column(Integer, ForeignKey("subscriptions.id"))
+    amount = Column(Numeric(10, 2))
+    currency = Column(String)
+    payment_date = Column(DateTime)
+    payment_method = Column(String)
+
+    subscription = relationship("Subscription", back_populates="payments")
+
+User.subscriptions = relationship("Subscription", back_populates="user")
