@@ -2,6 +2,7 @@ import io
 import logging
 import os
 from datetime import datetime
+from turtle import st
 
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
@@ -32,7 +33,13 @@ def register_handlers(bot):
     @bot.message_handler(func=lambda message: not is_command(message), content_types=["text", "photo", "document"])
     def invoke_chatbot(message):
         user_id = int(message.chat.id)
-        user_sign_in(user_id, message)
+        user = user_sign_in(user_id, message)
+
+        # Check active subscriptions
+        subscriptions = crud.get_active_subscriptions_by_user_id(user_id)
+        if not subscriptions:
+            bot.send_message(user_id, "You need an active subscription to use this service. Use /purchase to buy one.")
+            return
 
         last_chat_id = crud.get_last_chat_id(user_id)
         if last_chat_id is None:
