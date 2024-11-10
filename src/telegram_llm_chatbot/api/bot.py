@@ -5,7 +5,7 @@ import os
 import telebot
 from dotenv import find_dotenv, load_dotenv
 
-from telegram_bot_subscription.api.middlewares.antiflood import AntifloodMiddleware
+from telegram_llm_chatbot.api.middlewares.antiflood import AntifloodMiddleware
 from telegram_llm_chatbot.api.handlers import account, admin, chats, image_gen, llm, subscription
 
 
