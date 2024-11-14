@@ -3,10 +3,9 @@ import os
 
 from telegram_llm_chatbot.db import crud
 from telegram_llm_chatbot.db.models import User
-from datetime import datetime
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 
 def download_file(bot, file_id: str, file_path: str) -> None:
     """
