@@ -12,19 +12,17 @@ from telegram_llm_chatbot.db import crud
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-config_image_gen = OmegaConf.load("./src/telegram_llm_chatbot/conf/image_gen.yaml")
-image_model_config = instantiate(config_image_gen.dalle3)
-dalle3 = Dalle3OpenAI(image_model_config)
-
 strings = OmegaConf.load("./src/telegram_llm_chatbot/conf/strings.yaml")
-config = OmegaConf.load("./src/telegram_llm_chatbot/conf/config.yaml")
+config = OmegaConf.load("./src/telegram_llm_chatbot/conf/image_gen.yaml")
 
+image_model_config = instantiate(config.dalle3)
+dalle3 = Dalle3OpenAI(image_model_config)
 
 def register_handlers(bot):
 
     @bot.callback_query_handler(func=lambda call: call.data == "_cancel")
     def cancel_callback(call):
-        bot.send_message(call.message.chat.id, "Operation cancelled.")
+        bot.send_message(call.message.chat.id, config.strings.cancelled)
         bot.clear_step_handler_by_chat_id(chat_id=call.message.chat.id)
 
     @bot.message_handler(commands=["generate"])
@@ -35,21 +33,22 @@ def register_handlers(bot):
         # Check active subscriptions
         subscriptions = crud.get_active_subscriptions_by_user_id(user_id)
         if not subscriptions:
-            bot.send_message(user_id, "You need an active subscription to use this service. Use /purchase to buy one.")
+            bot.send_message(user_id, config.strings.no_subscription)
             return
 
         cancel_button = InlineKeyboardMarkup(row_width=1)
         cancel_button.add(
             InlineKeyboardButton(config.strings.cancel, callback_data="_cancel"),
         )
-        bot.reply_to(message, config.strings.image_gen.ask_description, reply_markup=cancel_button)
+        bot.reply_to(message, config.strings.ask_description, reply_markup=cancel_button)
 
 
         def handle_size(call, image_description: str):
+            del bot.callback_query_handlers[-1]
             image_size = call.data.replace("_", "")
             user_id = message.chat.id
             try:
-                bot.reply_to(message, config.strings.image_gen.please_wait)
+                bot.reply_to(message, config.strings.please_wait)
                 response_content = dalle3.invoke(
                     prompt=image_description, image_size=image_size
                 )
@@ -70,16 +69,19 @@ def register_handlers(bot):
             size_menu = InlineKeyboardMarkup(row_width=3)
             for option in config.strings.ask_size.options:
                 size_menu.add(
-                    InlineKeyboardButton(option["label"], callback_data=f"_{option['value']}"),
+                    InlineKeyboardButton(option["label"], callback_data=option['value']),
                 )
 
             bot.send_message(
-                user_id, config.strings.image_gen.ask_size.title,
+                user_id, config.strings.ask_size.title,
                 reply_markup=size_menu
             )
 
-            bot.register_next_step_handler(
-                message, handle_size, image_description=image_description
+            option_values = [option["value"] for option in config.strings.ask_size.options]
+            bot.register_callback_query_handler(
+                lambda call: handle_size(call, image_description),
+                lambda call: call.data in option_values,
             )
+
 
         bot.register_next_step_handler(message, handle_description)
