@@ -59,7 +59,30 @@ def register_handlers(bot):
                 else:
                     bot.reply_to(message, "Error downloading the image.")
             except Exception as e:
-                bot.reply_to(message, f"Error generating image: {str(e)}")
+                bot.reply_to(message, response_content)
+
+        def handle_description(message):
+            image_description = message.text
+            user_id = message.chat.id
+
+            # Create a menu to select the size
+            size_menu = InlineKeyboardMarkup(row_width=3)
+            for option in config.strings.ask_size.options:
+                size_menu.add(
+                    InlineKeyboardButton(option["label"], callback_data=option['value']),
+                )
+
+            bot.send_message(
+                user_id, config.strings.ask_size.title,
+                reply_markup=size_menu
+            )
+
+            option_values = [option["value"] for option in config.strings.ask_size.options]
+            bot.register_callback_query_handler(
+                lambda call: handle_size(call, image_description),
+                lambda call: call.data in option_values,
+            )
+
 
         def handle_description(message):
             image_description = message.text

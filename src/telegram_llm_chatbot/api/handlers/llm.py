@@ -2,7 +2,6 @@ import io
 import logging
 import os
 from datetime import datetime
-from turtle import st
 
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
