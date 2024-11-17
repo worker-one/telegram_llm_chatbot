@@ -17,6 +17,7 @@ image_model_config = instantiate(config_image_gen.dalle3)
 dalle3 = Dalle3OpenAI(image_model_config)
 
 strings = OmegaConf.load("./src/telegram_llm_chatbot/conf/strings.yaml")
+config = OmegaConf.load("./src/telegram_llm_chatbot/conf/config.yaml")
 
 
 def register_handlers(bot):
@@ -39,17 +40,19 @@ def register_handlers(bot):
 
         cancel_button = InlineKeyboardMarkup(row_width=1)
         cancel_button.add(
-            InlineKeyboardButton("Cancel", callback_data="_cancel"),
+            InlineKeyboardButton(config.strings.cancel, callback_data="_cancel"),
         )
-        bot.reply_to(message, strings.image_gen.ask_description, reply_markup=cancel_button)
+        bot.reply_to(message, config.strings.image_gen.ask_description, reply_markup=cancel_button)
 
-        def handle_description(message):
-            user_message = message.text
+
+        def handle_size(call, image_description: str):
+            image_size = call.data.replace("_", "")
             user_id = message.chat.id
-            logger.info(msg="User event", extra={"user_id": user_id, "user_message": user_message})
             try:
-                bot.reply_to(message, strings.image_gen.please_wait)
-                response_content = dalle3.generate_image(prompt=user_message)
+                bot.reply_to(message, config.strings.image_gen.please_wait)
+                response_content = dalle3.invoke(
+                    prompt=image_description, image_size=image_size
+                )
                 image_response = requests.get(response_content, timeout=30)
                 if image_response.status_code == 200:
                     bot.send_chat_action(chat_id=user_id, action="upload_photo")
@@ -58,5 +61,25 @@ def register_handlers(bot):
                     bot.reply_to(message, "Error downloading the image.")
             except Exception as e:
                 bot.reply_to(message, f"Error generating image: {str(e)}")
+
+        def handle_description(message):
+            image_description = message.text
+            user_id = message.chat.id
+
+            # Create a menu to select the size
+            size_menu = InlineKeyboardMarkup(row_width=3)
+            for option in config.strings.ask_size.options:
+                size_menu.add(
+                    InlineKeyboardButton(option["label"], callback_data=f"_{option['value']}"),
+                )
+
+            bot.send_message(
+                user_id, config.strings.image_gen.ask_size.title,
+                reply_markup=size_menu
+            )
+
+            bot.register_next_step_handler(
+                message, handle_size, image_description=image_description
+            )
 
         bot.register_next_step_handler(message, handle_description)

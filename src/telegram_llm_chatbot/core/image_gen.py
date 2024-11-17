@@ -17,12 +17,12 @@ class Dalle3OpenAI:
             if getattr(config, attr) is not None:
                 self.config.__setattr__(attr, getattr(config, attr))
 
-    def generate_image(self, prompt: str) -> str:
+    def invoke(self, prompt: str, image_size: str = None) -> str:
         """Generate an image from the model."""
         response = self.client.images.generate(
             model=self.config.model_name,
             prompt=prompt,
-            size=self.config.size,
+            size=image_size,
             quality=self.config.quality,
             n=self.config.n,
         )

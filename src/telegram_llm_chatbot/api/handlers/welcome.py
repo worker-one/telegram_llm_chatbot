@@ -20,3 +20,13 @@ def register_handlers(bot):
             logger.info("New user {message.chat.username} added to database.")
             crud.upsert_user(user_id, message.chat.username)
         bot.reply_to(message, strings.help)
+
+    @bot.message_handler(commands=["start"])
+    def start_command(message):
+        """Handle the /start command."""
+        user_id = int(message.chat.id)
+        # add user to database if not already present
+        if crud.get_user(user_id) is None:
+            logger.info("New user {message.chat.username} added to database.")
+            crud.upsert_user(user_id, message.chat.username)
+        bot.reply_to(message, strings.start)
