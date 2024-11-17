@@ -28,7 +28,6 @@ def register_handlers(bot):
     @bot.message_handler(commands=["generate"])
     def invoke_chatbot(message):
         user_id = int(message.chat.id)
-        user = user_sign_in(user_id, message)
 
         # Check active subscriptions
         subscriptions = crud.get_active_subscriptions_by_user_id(user_id)
@@ -105,6 +104,5 @@ def register_handlers(bot):
                 lambda call: handle_size(call, image_description),
                 lambda call: call.data in option_values,
             )
-
 
         bot.register_next_step_handler(message, handle_description)
