@@ -113,9 +113,24 @@ def update_subscription(subscription_id: int, status: Optional[str]=None, end_da
 
 def get_active_subscriptions_by_user_id(user_id: int) -> Optional[Subscription]:
     db: Session = get_session()
-    subscription = db.query(Subscription).filter(Subscription.user_id == user_id, Subscription.status == "active").first()
+    current_date = datetime.now()
+    
+    # Fetch the subscription
+    subscription = (
+        db.query(Subscription)
+        .filter(Subscription.user_id == user_id)
+        .filter(Subscription.status.in_(["active", "inactive"]))  # Relevant statuses
+        .first()
+    )
+    
+    if subscription:
+        # Update subscription status based on dates
+        if subscription.end_date and subscription.end_date < current_date:
+            subscription.status = "inactive"
+            db.commit()
+    
     db.close()
-    return subscription
+    return subscription if subscription and subscription.status == "active" else None
 
 def delete_subscription(subscription_id: int):
     db: Session = get_session()
