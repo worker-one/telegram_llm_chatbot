@@ -1,12 +1,12 @@
 import logging.config
 import os
 
-from omegaconf import OmegaConf
 import telebot
 from dotenv import find_dotenv, load_dotenv
+from omegaconf import OmegaConf
 
-from telegram_llm_chatbot.api.middlewares.antiflood import AntifloodMiddleware
 from telegram_llm_chatbot.api.handlers import account, admin, chats, image_gen, llm, subscription, welcome
+from telegram_llm_chatbot.api.middlewares.antiflood import AntifloodMiddleware
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

@@ -1,4 +1,3 @@
-from locale import currency
 from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey, Integer, Numeric, String
 from sqlalchemy.orm import DeclarativeBase, relationship
 
@@ -21,6 +20,9 @@ class User(Base):
 
     # Establish relationship with Chat and enable cascade deletion
     chats = relationship("Chat", backref="user", cascade="all, delete-orphan")
+
+    # Establish relationship with Subscription and enable cascade deletion
+    subscriptions = relationship("Subscription", back_populates="user", cascade="all, delete-orphan")
 
 
 class Chat(Base):
@@ -61,6 +63,7 @@ class SubscriptionPlan(Base):
 
     subscriptions = relationship("Subscription", back_populates="plan")
 
+
 class Subscription(Base):
     __tablename__ = "subscriptions"
 
@@ -73,7 +76,10 @@ class Subscription(Base):
 
     user = relationship("User", back_populates="subscriptions")
     plan = relationship("SubscriptionPlan", back_populates="subscriptions")
-    payments = relationship("Payment", back_populates="subscription")
+
+    # Establish relationship with Payment and enable cascade deletion
+    payments = relationship("Payment", back_populates="subscription", cascade="all, delete-orphan")
+
 
 class Payment(Base):
     __tablename__ = "payments"
@@ -87,4 +93,4 @@ class Payment(Base):
 
     subscription = relationship("Subscription", back_populates="payments")
 
-User.subscriptions = relationship("Subscription", back_populates="user")
+User.subscriptions = relationship("Subscription", back_populates="user", cascade="all, delete-orphan")

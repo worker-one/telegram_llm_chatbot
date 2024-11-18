@@ -4,3 +4,18 @@ dalle3:
   n: 1
   quality: "standard"
   size: "1024x1024"
+strings:
+  no_subscription: "Для использования услуги необходимо активировать месячную подписку за 197 руб."
+  cancel: "Отмена"
+  cancelled: "Отменено"
+  ask_description: "Пришлите описание изображения:"
+  ask_size:
+    title: "Выберите формат изображения:"
+    options:
+      - label: "квадратный"
+        value: "1024x1024"
+      - label: "вертикальный"
+        value: "1024x1792"
+      - label: "горизонтальный"
+        value: "1792x1024"
+  please_wait: "Изображение создаётся …"

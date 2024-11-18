@@ -17,14 +17,16 @@ def register_handlers(bot):
     def account(message):
         user_id = message.from_user.id
         username = message.from_user.username
+        crud.update_subscription_statuses(user_id)
         subscriptions = crud.get_subscriptions_by_user_id(user_id)
         if subscriptions[0]:
             for subscription in subscriptions:
+                plan = crud.get_subscription_plan(subscription.plan_id)
                 bot.send_message(
                     message.chat.id,
                     strings.account.subscription.format(
                         username=username,
-                        plan=subscription.plan.name,
+                        plan=plan.name,
                         status=subscription.status,
                         start_date=subscription.start_date.strftime("%Y-%m-%d"),
                         end_date=subscription.end_date.strftime("%Y-%m-%d")

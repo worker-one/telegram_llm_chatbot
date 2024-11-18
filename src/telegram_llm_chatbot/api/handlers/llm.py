@@ -23,6 +23,9 @@ ALLOWED_TEXT_EXTENSIONS = {"pdf", "doc", "docx", "txt"}
 MAX_FILE_SIZE_MB = 10
 MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024  # 10 MB
 
+# Load configurations
+strings = OmegaConf.load("./src/telegram_llm_chatbot/conf/strings.yaml")
+
 # Initialize file parser
 text_file_parser = TextFileParser(max_file_size_mb=MAX_FILE_SIZE_MB, allowed_file_types=ALLOWED_TEXT_EXTENSIONS)
 
@@ -35,9 +38,10 @@ def register_handlers(bot):
         user = user_sign_in(user_id, message)
 
         # Check active subscriptions
+        crud.update_subscription_statuses(user_id)
         subscriptions = crud.get_active_subscriptions_by_user_id(user_id)
         if not subscriptions:
-            bot.send_message(user_id, "You need an active subscription to use this service. Use /purchase to buy one.")
+            bot.send_message(user_id, strings.account.no_subscription)
             return
 
         last_chat_id = crud.get_last_chat_id(user_id)
@@ -46,12 +50,12 @@ def register_handlers(bot):
             chats = crud.get_user_chats(user_id)
             if chats:
                 last_chat_id = chats[0].id
-                bot.send_message(user_id, f"Are you are in the chat {chats[0].name}")
+                bot.send_message(user_id, strings.current_chat.format(chat_name=chats[0].name))
             else:
                 # Create a new chat
                 chat = crud.create_chat(user_id, "New chat")
                 last_chat_id = chat.id
-                bot.send_message(user_id, "No chat selected. Created a new chat.")
+                bot.send_message(user_id, strings.current_chat_no_chat)
             crud.update_user_last_chat_id(user_id, last_chat_id)
 
         user_message = message.caption if message.caption else ""
