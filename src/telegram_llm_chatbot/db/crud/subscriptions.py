@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -5,6 +6,9 @@ from sqlalchemy.orm import Session
 
 from telegram_llm_chatbot.db.database import get_session
 from telegram_llm_chatbot.db.models import Payment, Subscription, SubscriptionPlan
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # SubscriptionPlan CRUD operations
 
@@ -111,26 +115,38 @@ def update_subscription(subscription_id: int, status: Optional[str]=None, end_da
     db.close()
     return subscription
 
-def get_active_subscriptions_by_user_id(user_id: int) -> Optional[Subscription]:
+def get_active_subscriptions_by_user_id(user_id: int) -> Optional[list[Subscription]]:
     db: Session = get_session()
-    current_date = datetime.now()
-    
-    # Fetch the subscription
-    subscription = (
+
+    # Fetch the subscriptions
+    active_subscriptions = (
         db.query(Subscription)
         .filter(Subscription.user_id == user_id)
-        .filter(Subscription.status.in_(["active", "inactive"]))  # Relevant statuses
-        .first()
+        .filter(Subscription.status.in_(["active"]))  # Relevant statuses
+        .all()
     )
-    
-    if subscription:
-        # Update subscription status based on dates
-        if subscription.end_date and subscription.end_date < current_date:
-            subscription.status = "inactive"
-            db.commit()
-    
+
+    db.commit()
     db.close()
-    return subscription if subscription and subscription.status == "active" else None
+    return active_subscriptions if active_subscriptions else None
+
+def update_subscription_statuses(user_id: int) -> None:
+    current_date = datetime.now()
+    db: Session = get_session()
+    subscriptions = db.query(Subscription).filter(
+        Subscription.user_id == user_id
+    ).all()
+
+    for subscription in subscriptions:
+        if subscription.status == "active" and subscription.end_date < current_date:
+            subscription.status = "inactive"
+            logger.info(f"Subscription {subscription.id} has expired")
+        elif subscription.status == "inactive" and subscription.end_date > current_date:
+            subscription.status = "active"
+            logger.info(f"Subscription {subscription.id} has been reactivated")
+
+    db.commit()
+    db.close()
 
 def delete_subscription(subscription_id: int):
     db: Session = get_session()

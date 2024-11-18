@@ -30,6 +30,7 @@ def register_handlers(bot):
         user_id = int(message.chat.id)
 
         # Check active subscriptions
+        crud.update_subscription_statuses(user_id)
         subscriptions = crud.get_active_subscriptions_by_user_id(user_id)
         if not subscriptions:
             bot.send_message(user_id, config.strings.no_subscription)
