@@ -53,4 +53,5 @@ handle_callback_query_success: "Вы выбрали чат `{chat_name}`"
 delete_chat_ask: "Выберите чат для удаления:"
 delete_chat_success: "Чат `{chat_name}` успешно удалён."
 no_chats: "У вас нет чатов. Используйте меню, чтобы добавить чат."
-
+default_chat_name: "Новый чат"
+purcharse_subscription: "Активировать месячную подписку"
