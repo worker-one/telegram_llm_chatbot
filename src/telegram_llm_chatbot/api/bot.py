@@ -39,5 +39,5 @@ def start_bot():
     # Middleware
     bot.setup_middleware(AntifloodMiddleware(bot, 2))
 
-    bot.infinity_polling(timeout=90)
+    bot.infinity_polling(timeout=190)
     #bot.polling(timeout=90)

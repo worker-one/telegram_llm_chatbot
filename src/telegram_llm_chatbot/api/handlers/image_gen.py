@@ -33,7 +33,11 @@ def register_handlers(bot):
         crud.update_subscription_statuses(user_id)
         subscriptions = crud.get_active_subscriptions_by_user_id(user_id)
         if not subscriptions:
-            bot.send_message(user_id, config.strings.no_subscription)
+            purcharse_button = InlineKeyboardMarkup(row_width=1)
+            purcharse_button.add(
+                InlineKeyboardButton(strings.purcharse_subscription, callback_data="_purchase"),
+            )
+            bot.send_message(user_id, strings.account.no_subscription, reply_markup=purcharse_button)
             return
 
         cancel_button = InlineKeyboardMarkup(row_width=1)

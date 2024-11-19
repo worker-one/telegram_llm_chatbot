@@ -21,6 +21,27 @@ strings = OmegaConf.load("./src/telegram_llm_chatbot/conf/strings.yaml")
 
 def register_handlers(bot):
 
+    @bot.callback_query_handler(func=lambda call: call.data == "_purchase")
+    def purchase(call):
+        subscription_plans = crud.get_subscription_plans()
+        for subscription_plan in subscription_plans:
+            if subscription_plan.price > 0:
+                prices = [LabeledPrice(label=subscription_plan.name, amount=int(subscription_plan.price*100))]
+                bot.send_invoice(
+                    chat_id = call.message.chat.id,
+                    title = subscription_plan.name,
+                    description = subscription_plan.description or " ",
+                    provider_token = PROVIDER_TOKEN,
+                    currency = subscription_plan.currency,
+                    prices = prices,
+                    invoice_payload = subscription_plan.id,
+                    need_email=True,
+                    send_email_to_provider=True,
+                    is_flexible=False,
+                    start_parameter='premium-example'
+                )
+
+
     @bot.message_handler(commands=["purchase"])
     def purchase(message):
         subscription_plans = crud.get_subscription_plans()
@@ -35,14 +56,18 @@ def register_handlers(bot):
                     currency = subscription_plan.currency,
                     prices = prices,
                     invoice_payload = subscription_plan.id,
+                    need_email=True,
+                    send_email_to_provider=True,
                     is_flexible=False,
                     start_parameter='premium-example'
                 )
 
     @bot.pre_checkout_query_handler(func=lambda query: True)
     def checkout(pre_checkout_query):
-        bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True,
-                                    error_message="Try to pay again in a few minutes, we need a small rest.")
+        bot.answer_pre_checkout_query(
+            pre_checkout_query.id, ok=True,
+            error_message="Try to pay again in a few minutes, we need a small rest."
+        )
 
     @bot.message_handler(content_types=['successful_payment'])
     def successful_payment(message):

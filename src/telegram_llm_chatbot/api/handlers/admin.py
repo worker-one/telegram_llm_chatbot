@@ -10,8 +10,8 @@ from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram_llm_chatbot.api.db.export import export_table_to_df
 from telegram_llm_chatbot.db import crud
 
+config = OmegaConf.load("./src/telegram_llm_chatbot/conf/config.yaml")
 strings = OmegaConf.load("./src/telegram_llm_chatbot/conf/strings.yaml")
-
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -25,7 +25,8 @@ def create_admin_menu_markup(options) -> InlineKeyboardMarkup:
         InlineKeyboardButton(options.remove_subscription_plan, callback_data="_remove_subscription_plan"),
         InlineKeyboardButton(options.configure_language_model, callback_data="_configure_language_model"),
         InlineKeyboardButton(options.configure_image_model, callback_data="_configure_image_model"),
-        InlineKeyboardButton(options.export_data, callback_data="_export_data")
+        InlineKeyboardButton(options.export_data, callback_data="_export_data"),
+        InlineKeyboardButton(options.about, callback_data="_about")
     )
     return menu_markup
 
@@ -63,6 +64,15 @@ def register_handlers(bot):
             user_id, strings.admin_menu.title,
             reply_markup=create_admin_menu_markup(strings.admin_menu)
         )
+
+    @bot.callback_query_handler(func=lambda call: call.data == "_about")
+    def about_handler(call):
+        user_id = call.from_user.id
+
+        config_str = OmegaConf.to_yaml(config)
+
+        # Send config
+        bot.send_message(user_id, f"```yaml\n{config_str}\n```", parse_mode="Markdown")
 
     @bot.callback_query_handler(func=lambda call: call.data == "_configure_subscription_plan")
     def configure_subscription_plan(call):
