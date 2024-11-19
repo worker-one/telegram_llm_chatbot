@@ -24,7 +24,7 @@ bot = telebot.TeleBot(BOT_TOKEN, use_class_middlewares=True, parse_mode=None)
 
 
 def start_bot():
-    logger.info(f"{config.app.name} v{config.app.version}")
+    logger.info(f"{config.name} v{config.version}")
     logger.info(f"Bot `{str(bot.get_me().username)}` has started")
 
     # Handlers
