@@ -29,6 +29,7 @@ bot = telebot.TeleBot(BOT_TOKEN, use_class_middlewares=True, parse_mode=None)
 def start_bot():
     logger.info(f"{config.app.name} v{config.app.version}")
 
+
     # Handlers
     chats.register_handlers(bot)
     llm.register_handlers(bot)
