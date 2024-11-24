@@ -26,6 +26,7 @@ admin_menu:
   period_month: "Month"
   period_two_weeks: "Two weeks"
   period_all: "All"
+  about: "About the app"
 
 configure_subscription_ask: |
   Enter new subscription data in the following format
