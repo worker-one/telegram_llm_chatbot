@@ -1,2 +1,3 @@
-name: "telegram_llm_chatbot"
-version: "0.3.3"
+app:
+    name: "telegram_llm_chatbot"
+    version: "0.3.4"
