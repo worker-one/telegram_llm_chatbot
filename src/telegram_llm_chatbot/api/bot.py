@@ -27,14 +27,13 @@ bot = telebot.TeleBot(BOT_TOKEN, use_class_middlewares=True, parse_mode=None)
 
 
 def start_bot():
-    logger.info(f"{config.name} v{config.version}")
-    logger.info(f"Bot `{str(bot.get_me().username)}` has started")
+    logger.info(f"{config.app.name} v{config.app.version}")
 
     # Handlers
     chats.register_handlers(bot)
     llm.register_handlers(bot)
     image_gen.register_handlers(bot)
-    #admin.register_handlers(bot)
+    admin.register_handlers(bot)
     subscription.register_handlers(bot)
     account.register_handlers(bot)
     welcome.register_handlers(bot)
@@ -48,5 +47,6 @@ def start_bot():
     # Add custom filters
     bot.add_custom_filter(custom_filters.StateFilter(bot))
 
+    logger.info(f"Bot `{str(bot.get_me().username)}` has started")
     bot.infinity_polling(timeout=190)
     #bot.polling(timeout=90)

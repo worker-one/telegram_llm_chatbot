@@ -51,8 +51,10 @@ def register_handlers(bot: TeleBot):
         cancel_button.add(
             InlineKeyboardButton(config.strings.cancel, callback_data="_cancel"),
         )
-        bot.reply_to(message, config.strings.ask_description, reply_markup=cancel_button)
+        sent_message = bot.reply_to(message, config.strings.ask_description, reply_markup=cancel_button)
         state.set(ImageGenStates.awaiting_description)
+        bot.register_next_step_handler(sent_message, handle_description, state)
+
 
     @bot.message_handler(state=ImageGenStates.awaiting_description)
     def handle_description(message: Message, state: StateContext):
@@ -96,3 +98,4 @@ def register_handlers(bot: TeleBot):
             logger.error(e)
             bot.reply_to(call.message, response_content)
         state.delete()
+
