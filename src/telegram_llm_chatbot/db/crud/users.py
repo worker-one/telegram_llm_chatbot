@@ -1,10 +1,13 @@
+import datetime
 import logging
+import time
 from typing import Optional
 
 from sqlalchemy.orm import Session
+from tomlkit import date
 
 from telegram_llm_chatbot.db.database import get_session
-from telegram_llm_chatbot.db.models import Chat, Message, User
+from telegram_llm_chatbot.db.models import Chat, Message, User, Log
 
 # Load logging configuration with OmegaConf
 logging.basicConfig(level=logging.INFO)
@@ -133,5 +136,24 @@ def delete_user(user_id: int) -> None:
     except Exception as e:
         db.rollback()
         logger.error(f"Error deleting user with id {user_id}: {e}")
+    finally:
+        db.close()
+
+def write_log(user_id: int, content: str) -> None:
+    """
+    Write a log entry for a user.
+
+    Args:
+        user_id (int): The ID of the user.
+        content (str): The content of the log entry.
+    """
+    db: Session = get_session()
+    try:
+        db.add(Log(user_id=user_id, content=content, timestamp=datetime.datetime.now()))
+        db.commit()
+        logger.info(f"Log entry added for user with id {user_id}.")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error adding log entry for user with id {user_id}: {e}")
     finally:
         db.close()

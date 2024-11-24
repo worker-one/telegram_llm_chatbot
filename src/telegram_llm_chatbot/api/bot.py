@@ -4,9 +4,12 @@ import os
 import telebot
 from dotenv import find_dotenv, load_dotenv
 from omegaconf import OmegaConf
+from telebot import custom_filters
+from telebot.states.sync.middleware import StateMiddleware
 
 from telegram_llm_chatbot.api.handlers import account, admin, chats, image_gen, llm, subscription, welcome
 from telegram_llm_chatbot.api.middlewares.antiflood import AntifloodMiddleware
+from telegram_llm_chatbot.api.middlewares.user import UserCallbackMiddleware, UserMessageMiddleware
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -24,8 +27,8 @@ bot = telebot.TeleBot(BOT_TOKEN, use_class_middlewares=True, parse_mode=None)
 
 
 def start_bot():
-    logger.info(f"{config.name} v{config.version}")
-    logger.info(f"Bot `{str(bot.get_me().username)}` has started")
+    logger.info(f"{config.app.name} v{config.app.version}")
+
 
     # Handlers
     chats.register_handlers(bot)
@@ -38,6 +41,13 @@ def start_bot():
 
     # Middleware
     bot.setup_middleware(AntifloodMiddleware(bot, 2))
+    bot.setup_middleware(UserMessageMiddleware())
+    bot.setup_middleware(UserCallbackMiddleware())
+    bot.setup_middleware(StateMiddleware(bot))
 
+    # Add custom filters
+    bot.add_custom_filter(custom_filters.StateFilter(bot))
+
+    logger.info(f"Bot `{str(bot.get_me().username)}` has started")
     bot.infinity_polling(timeout=190)
     #bot.polling(timeout=90)

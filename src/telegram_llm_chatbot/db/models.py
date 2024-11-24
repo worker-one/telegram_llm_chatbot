@@ -51,6 +51,16 @@ class Message(Base):
     timestamp = Column(DateTime)
 
 
+class Log(Base):
+    """Log model"""
+
+    __tablename__ = "logs"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(BigInteger, ForeignKey("users.id"))
+    content = Column(String)
+    timestamp = Column(DateTime)
+
 class SubscriptionPlan(Base):
     __tablename__ = "subscription_plans"
 
