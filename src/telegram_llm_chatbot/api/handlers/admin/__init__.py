@@ -1,4 +1,5 @@
-from telegram_llm_chatbot.api.handlers.admin import db, menu, subscription, about, config
+from telegram_llm_chatbot.api.handlers.admin import about, config, db, menu, subscription
+
 
 def register_handlers(bot):
     db.register_handlers(bot)

@@ -94,15 +94,17 @@ def upsert_user(user_id: int, name: str, last_chat_id: Optional[int] = None) -> 
             user.id = user_id
             if last_chat_id:
                 user.current_chat_id = last_chat_id
-            logger.info(f"User with id {name} updated successfully.")
         else:
-            new_user = User(id=user_id, name=name)
-            db.add(new_user)
-            logger.info(f"User with name {name} added successfully.")
+            user = User(id=user_id, name=name)
+            db.add(user)
+        logger.info(f"User with name {user.name} added successfully.")
         db.commit()
+        return user
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error adding user with name {name}: {e}")
     finally:
         db.close()
-        return user
 
 
 def delete_user(user_id: int) -> None:

@@ -93,13 +93,16 @@ def create_subscription(user_id: int, plan_id: int, status: str = "active") -> S
     db: Session = get_session()
     db.expire_on_commit = False
     db.add(subscription)
+
+    logger.info(f"Subscription created for user {user_id} with plan {plan.name}")
+
     db.commit()
     db.close()
     return subscription
 
 def get_subscriptions_by_user_id(user_id: int) -> Optional[list[Subscription]]:
     db: Session = get_session()
-    subscriptions = db.query(Subscription).filter(Subscription.user_id == user_id)
+    subscriptions = db.query(Subscription).filter(Subscription.user_id == user_id).all()
     db.close()
     return subscriptions
 
