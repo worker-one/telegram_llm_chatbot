@@ -24,6 +24,8 @@ class User(Base):
     # Establish relationship with Subscription and enable cascade deletion
     subscriptions = relationship("Subscription", back_populates="user", cascade="all, delete-orphan")
 
+    # Establish relationship with Log and enable cascade deletion
+    logs = relationship("Log", backref="user", cascade="all, delete-orphan")
 
 class Chat(Base):
     """Chat model"""

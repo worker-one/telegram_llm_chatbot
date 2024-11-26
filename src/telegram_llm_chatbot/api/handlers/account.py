@@ -19,7 +19,8 @@ def register_handlers(bot):
         username = message.from_user.username
         crud.update_subscription_statuses(user_id)
         subscriptions = crud.get_subscriptions_by_user_id(user_id)
-        if subscriptions[0]:
+        print(type(subscriptions), subscriptions)
+        if subscriptions:
             for subscription in subscriptions:
                 plan = crud.get_subscription_plan(subscription.plan_id)
                 bot.send_message(

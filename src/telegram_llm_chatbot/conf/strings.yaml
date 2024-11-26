@@ -2,6 +2,7 @@ no_rights: "The user {username} does not have admin rights."
 
 account:
   no_subscription: "Для использования услуги необходимо активировать месячную подписку за 197 руб."
+  you_have_subscription: "У вас нет подписок."
   subscription: |
     Username: {username}
     Plan: {plan}

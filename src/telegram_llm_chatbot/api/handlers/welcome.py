@@ -25,8 +25,11 @@ def register_handlers(bot):
     def start_command(message):
         """Handle the /start command."""
         user_id = int(message.chat.id)
-        # add user to database if not already present
-        if crud.get_user(user_id) is None:
-            logger.info("New user {message.chat.username} added to database.")
-            crud.upsert_user(user_id, message.chat.username)
+
+        # If user does not have any subscritions
+        if not crud.get_subscriptions_by_user_id(user_id):
+
+            # Grant trial subscription
+            crud.create_subscription(user_id, plan_id=1)
+
         bot.reply_to(message, config.strings.start)
