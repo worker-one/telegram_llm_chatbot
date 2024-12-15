@@ -23,7 +23,6 @@ jobs:
           fi
           
           echo "LLM_API=${{ vars.LLM_API }}" >> .env
-          echo "BOT_TOKEN=${{ vars.BOT_TOKEN }}" >> .env
           echo "DB_HOST=${{ vars.DB_HOST }}" >> .env
           echo "DB_PORT=${{ vars.DB_PORT }}" >> .env
           echo "DB_NAME=${{ vars.DB_NAME }}" >> .env
