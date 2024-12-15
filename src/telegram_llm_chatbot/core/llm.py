@@ -45,6 +45,7 @@ class LLM:
             for message in chat_history
             if message.role in role_message_map
         ]
+        # messages.append(AIMessage(content=[{"type": "text", "text": self.system_prompt}]))
 
         # Handle the image if provided
         if image:
@@ -62,4 +63,4 @@ class LLM:
             return client.stream(messages)
         else:
             response = client.invoke(messages)
-            return ModelResponse(response_content=response.content, config=config)
+            return ModelResponse(response_content=response.content.replace("<end_of_turn>", ""), config=config)
