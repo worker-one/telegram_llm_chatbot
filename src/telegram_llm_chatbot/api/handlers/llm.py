@@ -1,3 +1,4 @@
+from ast import parse
 import io
 import logging
 import os
@@ -170,9 +171,11 @@ def register_handlers(bot: TeleBot):
                 if idx > 200:
                     continue
             bot.edit_message_text(
-                accumulated_response, chat_id=user_id, message_id=sent_msg.message_id
+                accumulated_response.replace("<end_of_turn>", ""), chat_id=user_id, message_id=sent_msg.message_id
             )
+            crud.create_message(last_chat_id, "assistant", content=accumulated_response, timestamp=datetime.now())
         else:
             # Generate and send the final response
             response = llm.run(chat_history, image=image)
             bot.send_message(user_id, response.response_content)
+            crud.create_message(last_chat_id, "assistant", content=response.response_content, timestamp=datetime.now())
